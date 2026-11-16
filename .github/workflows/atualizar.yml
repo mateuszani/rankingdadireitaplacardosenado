@@ -1,0 +1,70 @@
+name: Atualizar o Placar do Senado
+
+# Todo dia às 03:47 de Brasília (06:47 UTC) e quando alguém aperta "Run workflow".
+on:
+  schedule:
+    - cron: "47 6 * * *"
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: "Publicar o site no fim (desmarque para só testar)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: placar
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas==2.2.3 requests==2.32.3
+      - name: Coletar, calcular e conferir
+        run: |
+          mkdir -p teste
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publicar }}" = "false" ]; then
+            python robo/rodar.py --salvar-rep teste/rep.json
+          else
+            python robo/rodar.py
+          fi
+      - name: Guardar o teste (só quando não publica)
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.publicar == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: teste
+          path: |
+            teste
+            saida
+      - name: Guardar o relatório desta rodada
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio
+          path: relatorio.json
+      # Só chega aqui se a conferência passou. Se falhar, nada é publicado
+      # e o site continua com a última versão boa.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: saida
+
+  publicar:
+    needs: coletar
+    if: github.event_name == 'schedule' || inputs.publicar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

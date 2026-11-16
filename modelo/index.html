@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#061531">
+<title>Placar do Senado</title>
+<meta name="description" content="Presença nas votações, propostas, votos, custos e emendas de cada um dos 81 senadores, com dados oficiais do Senado Federal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Vidaloka&display=swap" rel="stylesheet">
+<style>
+/* IDEIA  o placar de um estádio dentro do plenário: a arquibancada de 81 cadeiras acende no começo,
+          cada senador vira uma figurinha, e os números são lidos como placar.
+   COR    azul-marinho #061531 (fundo), dourado #DDA544 (o que acende), papel #F4F1EA (leitura),
+          vermelho #C2564D (Não), turquesa #12B5CB só para "fora do padrão".
+   LETRA  Bricolage Grotesque em tudo (larga e gorda nos números, normal no texto); Vidaloka só na marca.
+   FORMA  celular primeiro, barra de abas embaixo como app; seções em "folhas" arredondadas empilhadas. */
+:root{color-scheme:light;
+  --navy:#061531;--navy2:#0B1F45;--navy3:#122a5c;--navy4:#1d3a6e;
+  --gold:#DDA544;--gold2:#F0C878;--gold3:#9a6c1e;--goldbg:#fbf0d6;
+  --paper:#F4F1EA;--card:#fff;--ink:#0B1F45;--mut:#556079;--line:#e4ddcc;
+  --red:#C2564D;--fp:#12B5CB;--fpd:#0a7180;--fpbg:#ddf5f8;
+  --r1:12px;--r2:20px;--r3:30px;
+  --f:"Bricolage Grotesque",system-ui,sans-serif}
+*{box-sizing:border-box;min-width:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+html,body{margin:0;background:var(--navy);color:var(--ink)}
+body{font:400 17px/1.55 var(--f);font-optical-sizing:auto;overflow-x:clip;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+@media(min-width:760px){body{padding-bottom:0}}
+h1,h2,h3{font-family:var(--f);font-weight:800;font-stretch:80%;letter-spacing:-.025em;line-height:1.02;margin:0;text-wrap:balance}
+h1{font-size:clamp(36px,8.5vw,64px)}
+h2{font-size:clamp(28px,6vw,42px);margin-bottom:10px}
+h3{font-size:21px;margin-bottom:6px}
+p{margin:0 0 12px;text-wrap:pretty}
+a{color:var(--gold3);text-underline-offset:3px;text-decoration-thickness:2px;font-weight:700}
+b,strong{font-weight:700}
+.w{max-width:980px;margin:0 auto;padding:0 max(18px,4vw)}
+.num{font-variant-numeric:tabular-nums;font-stretch:75%;font-weight:800;letter-spacing:-.02em}
+
+/* topo */
+.top{background:rgba(6,21,49,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--paper);position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(221,165,68,.25)}
+.top .w{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--paper)}
+.brand svg{flex:none}
+.brand b{display:block;font:400 21px/1 Vidaloka,Georgia,serif;color:var(--gold);letter-spacing:0}
+.brand small{display:block;font:600 12px/1.2 var(--f);color:#b8c3dc;margin-top:3px}
+.nav{display:none;gap:4px}
+.nav a{color:#d7deee;font-weight:600;font-size:15px;text-decoration:none;padding:8px 12px;border-radius:999px}
+.nav a:hover{background:rgba(221,165,68,.16);color:var(--gold2)}
+@media(min-width:760px){.nav{display:flex}}
+
+/* barra de abas (celular) */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(6,21,49,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(221,165,68,.3);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;color:#b8c3dc;text-decoration:none;font:600 11.5px/1.1 var(--f);padding:6px 0;border-radius:12px}
+.tabs a svg{width:24px;height:24px}
+.tabs a:active,.tabs a:hover{color:var(--gold2);background:rgba(221,165,68,.12)}
+@media(min-width:760px){.tabs{display:none}}
+
+/* abertura: a arquibancada */
+.hero{color:var(--paper);padding:28px 0 56px;background:radial-gradient(90% 70% at 50% 100%,#17336a 0%,var(--navy) 70%)}
+.hero h1{color:var(--paper);max-width:15ch}
+.hero .lede{color:#c3cde3;font-size:18px;margin-top:14px;max-width:56ch}
+.board{position:relative;margin-top:22px}
+.board svg{display:block;width:100%;height:auto;overflow:visible}
+.seat{cursor:pointer;transform-box:fill-box;transform-origin:center;animation:acende .5s cubic-bezier(.3,1.6,.5,1) backwards}
+.seat:hover{stroke:#fff;stroke-width:2.5}
+a:focus-visible .seat{stroke:#fff;stroke-width:4}
+@keyframes acende{from{transform:scale(0);fill:#1d3a6e}}
+.center{position:absolute;left:50%;bottom:0;transform:translateX(-50%);text-align:center;pointer-events:none;width:34%}
+.center .num{display:block;font-size:clamp(26px,8vw,84px);line-height:.9;color:var(--paper)}
+.center span:last-child{font-size:clamp(11px,2vw,14px);color:#b8c3dc;font-weight:600}
+.leg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:14px;color:#d7deee;margin-top:16px}
+.leg span{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.06)}
+.leg i{width:12px;height:12px;border-radius:50%}
+.axis{display:flex;justify-content:space-between;font-size:13px;color:#8f9cbb;font-weight:600;margin-top:4px;padding:0 1%}
+.how{display:grid;gap:10px;margin-top:22px}
+@media(min-width:760px){.how{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.how p{margin:0;background:rgba(255,255,255,.05);border:1px solid rgba(221,165,68,.25);border-radius:var(--r2);padding:14px 16px;font-size:15px;color:#d7deee}
+.how p b{display:block;color:var(--gold2);font-size:16px;margin-bottom:2px}
+.how a{color:var(--gold2)}
+
+/* folhas empilhadas */
+.sheet{position:relative;background:var(--paper);border-radius:var(--r3) var(--r3) 0 0;margin-top:-28px;padding:38px 0 58px}
+.sheet.dark{background:var(--navy2);color:var(--paper)}
+.sheet.dark p{color:#d7deee}
+.sheet.dark .sm{color:#a9b5cf}
+.sheet.dark a{color:var(--gold2)}
+.sheet.white{background:#fff}
+.sec-h{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.sec-h .ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:var(--navy);color:var(--gold)}
+.dark .sec-h .ic{background:var(--gold);color:var(--navy)}
+.sec-h h2{margin:0}
+.intro{font-size:17.5px;max-width:64ch}
+.sm{font-size:14px;color:var(--mut);line-height:1.5}
+
+/* campos */
+.f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:16px 0 8px}
+.f input{grid-column:1/-1}
+@media(min-width:680px){.f{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)}.f input{grid-column:auto}}
+input,select{font:500 17px var(--f);min-height:54px;padding:0 18px;border:2px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);width:100%;appearance:none;-webkit-appearance:none}
+@media(max-width:679px){select{font-size:15px;padding-left:14px!important;padding-right:32px!important;background-position:right 12px center!important}}
+select{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%230B1F45' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 18px center;padding-right:42px}
+input[type=search]{padding-left:48px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%23556079' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='8.5' cy='8.5' r='6.5'/%3E%3Cpath d='M13.5 13.5L18 18'/%3E%3C/svg%3E") no-repeat 18px center}
+input:hover,select:hover{border-color:#cdbf9f}
+input:focus-visible,select:focus-visible,a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.cnt{font-size:15px;color:var(--mut);margin:8px 0 10px;font-weight:600}
+
+/* lista de senadores: figurinhas pequenas */
+.list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@media(min-width:680px){.list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.item{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 16px 12px 12px;background:#fff;border-radius:var(--r2);border:2px solid transparent;transition:border-color .15s,transform .15s}
+.item:hover{border-color:var(--gold);transform:translateY(-2px)}
+.av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:var(--gold);font:800 18px var(--f);font-stretch:80%;box-shadow:inset 0 0 0 3px var(--gold)}
+.item a.nm{font-weight:700;color:var(--ink);text-decoration:none;display:block;font-size:17px;line-height:1.2}
+.item a.nm::after{content:"";position:absolute;inset:0;border-radius:var(--r2)}
+.pr{position:relative;z-index:1;text-align:right;font-size:12.5px;color:var(--mut);line-height:1.25}
+.pr a{display:block;font:800 22px/1.1 var(--f);font-stretch:75%;text-decoration:none;color:var(--ink)}
+.pr a:hover{color:var(--gold3)}
+.pr .fp{margin-top:3px}
+.btn{font:700 16px var(--f);min-height:52px;padding:0 26px;border-radius:999px;border:0;background:var(--navy);color:var(--gold2);cursor:pointer;margin-top:16px}
+.btn:hover{background:var(--navy3)}
+.dark .btn{background:var(--gold);color:var(--navy)}
+
+/* chips */
+.chips,.subs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
+.chip{font:600 15px var(--f);min-height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--gold)}
+.chip[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:var(--gold2)}
+.subs .chip{min-height:40px;font-size:14px}
+.seg{display:inline-flex;padding:4px;border-radius:999px;background:rgba(255,255,255,.08);gap:2px;margin:6px 0 10px}
+.seg .chip{border:0;background:transparent;color:#d7deee;min-height:42px}
+.seg .chip[aria-pressed=true]{background:var(--gold);color:var(--navy)}
+
+/* busca */
+.sbox{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:14px 0 4px}
+.sbtn{font:700 16px var(--f);min-height:54px;padding:0 24px;border-radius:999px;border:0;background:var(--navy);color:var(--gold2);cursor:pointer}
+.sbtn:hover{background:var(--navy3)}
+.results{margin-top:8px}
+.pi{padding:14px 16px;background:#fff;border-radius:var(--r1);margin-bottom:8px}
+.gb .pi{background:var(--paper)}
+.pi .h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13.5px;color:var(--mut)}
+.pi .h a{font-weight:800;font-size:15px}
+.pi p{margin:6px 0 0;font-size:16px;line-height:1.45}
+.st{font:700 12.5px var(--f);padding:3px 9px;border-radius:999px;background:#ece5d6;color:var(--mut)}
+.st1{background:var(--navy);color:var(--gold2)}.st2{background:#e3ecfb;color:#1d4c8f}.st3{background:var(--goldbg);color:#7a5800}
+.gtag{font:700 12.5px var(--f);padding:3px 9px;border-radius:999px;background:var(--goldbg);color:var(--gold3)}
+.who{font-size:13.5px;color:var(--mut);margin-top:6px}
+.who button{font:700 13.5px var(--f);border:0;background:none;color:var(--gold3);padding:0;cursor:pointer;text-decoration:underline}
+.warn{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;background:var(--goldbg);border-radius:var(--r2);padding:16px 18px;font-size:15.5px;margin:16px 0}
+.warn::before{content:"!";display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--gold);color:var(--navy);font:800 18px var(--f)}
+.warn>*{grid-column:2}
+
+/* repetidas */
+.rg{background:#fff;border-radius:var(--r2);margin-top:10px;overflow:hidden}
+.rg>summary{padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;color:var(--ink);list-style:none;cursor:pointer;font-weight:500}
+.rg>summary::-webkit-details-marker{display:none}
+.rg .big{grid-row:1/3;align-self:center;display:grid;place-items:center;width:64px;height:64px;border-radius:18px;background:var(--navy);color:var(--gold);font:800 30px/1 var(--f);font-stretch:75%}
+.rg .big small{display:block;font:600 11px var(--f);color:#b8c3dc;margin-top:-6px}
+.rg.o .big{background:var(--fp);color:var(--navy)}
+.rg.o .big small{color:var(--navy)}
+.rg[open]>summary{border-bottom:2px solid var(--paper)}
+.gb{padding:10px 12px 12px}
+
+/* votações que dividiram */
+.votes{display:grid;gap:10px;margin-top:14px}
+@media(min-width:760px){.votes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vcard{background:rgba(255,255,255,.05);border:1px solid rgba(221,165,68,.22);border-radius:var(--r2);padding:16px}
+.vcard b{display:block;font-size:16.5px;line-height:1.3;color:var(--paper)}
+.vcard .vm{font-size:13.5px;color:#a9b5cf;margin-top:8px}
+.split{display:flex;height:12px;border-radius:999px;overflow:hidden;margin-top:12px;background:var(--red)}
+.split i{background:var(--gold)}
+.splitl{display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;margin-top:6px}
+.splitl span:first-child{color:var(--gold2)}.splitl span:last-child{color:#ee9a92}
+
+/* partidos: placar */
+.pboard{display:grid;gap:12px;margin-top:6px}
+@media(min-width:760px){.pboard{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pair{background:var(--navy);border-radius:var(--r2);padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:end;border:1px solid rgba(221,165,68,.22)}
+.pair .nm{font:700 18px/1.2 var(--f);color:var(--paper)}
+.pair .vs{display:flex;align-items:center;gap:8px}
+.pair .vs em{font-style:normal;font-size:13px;color:#8f9cbb;font-weight:600}
+.pair .val{font:800 44px/0.9 var(--f);font-stretch:75%;font-variant-numeric:tabular-nums;color:var(--gold);white-space:nowrap;text-align:right}
+.pair .val a{color:var(--gold);text-decoration:none}
+.seats{grid-column:1/-1;display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:3px}
+.seats i{aspect-ratio:1;border-radius:50%;background:#1b3463}
+.seats i.on{background:var(--gold)}
+.pair .sm{color:#a9b5cf;grid-column:1/-1;margin:0}
+.dark details summary{color:var(--gold2)}
+.mxwrap{background:#fff;border-radius:var(--r2);padding:12px;margin-top:8px;color:var(--ink)}
+.dark .mxwrap .sm{color:var(--mut)}
+
+/* tabelas */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:16px}
+th,td{padding:10px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:13.5px;color:var(--mut);font-weight:700;white-space:normal;vertical-align:bottom}
+td a{font-weight:800}
+.mx td,.mx th{font-size:13px;padding:7px 5px;text-align:center;border-bottom:2px solid #fff;border-right:2px solid #fff}
+.mx tbody th{text-align:left;position:sticky;left:0;background:#fff;z-index:1}
+.mx td a{text-decoration:none;color:inherit;font-weight:700}
+details{margin-top:14px}
+summary{cursor:pointer;font-weight:700;color:var(--gold3);min-height:44px;display:flex;align-items:center}
+
+/* glossário */
+dl{margin:14px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@media(min-width:680px){dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+dl>div{background:var(--paper);border-radius:var(--r2);padding:14px 16px}
+dt{font-weight:800;font-size:18px;color:var(--navy);font-stretch:85%}
+dd{margin:4px 0 0;font-size:15.5px}
+
+/* regras */
+.rule{counter-reset:r;list-style:none;padding:0;margin:14px 0;display:grid;gap:10px}
+.rule li{counter-increment:r;display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;background:#fff;border-radius:var(--r2);padding:14px 16px}
+.rule li::before{content:counter(r);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--navy);color:var(--gold);font:800 18px var(--f)}
+.groups li::before{content:attr(data-i);font-size:20px}
+
+/* fora do padrão */
+.fp{display:inline-block;font:700 12.5px/1.5 var(--f);padding:2px 10px;border-radius:999px;background:var(--fp);color:var(--navy);white-space:nowrap;vertical-align:1px;cursor:help}
+.fpnote{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;background:var(--fpbg);border-radius:var(--r2);padding:16px 18px;font-size:15.5px;margin:0 0 14px}
+.fpnote::before{content:"";width:14px;height:14px;margin-top:5px;border-radius:50%;background:var(--fp);box-shadow:0 0 0 5px rgba(18,181,203,.25)}
+.fpnote ul{margin:6px 0 6px;padding-left:18px}
+
+/* página do senador: a figurinha */
+.dhero{padding:16px 0 60px;background:radial-gradient(80% 70% at 50% 0%,#17336a,var(--navy) 75%)}
+.back{display:inline-flex;align-items:center;gap:6px;padding:10px 0;font-weight:700;color:var(--gold2);text-decoration:none}
+.fig{position:relative;margin-top:6px;border-radius:26px;padding:22px 18px 18px;background:linear-gradient(160deg,var(--navy3),var(--navy2) 60%);border:3px solid var(--gold);color:var(--paper);box-shadow:0 0 0 6px rgba(221,165,68,.15),0 30px 60px -30px rgba(0,0,0,.6)}
+.fig .head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.fig .bigav{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:var(--navy);font:800 34px var(--f);font-stretch:75%;box-shadow:0 0 0 4px var(--navy2),0 0 0 7px var(--gold)}
+.fig h1{color:var(--paper);font-size:clamp(30px,7vw,52px)}
+.fig .tagp{display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fig .tagp span,.fig .tagp a{font:700 14px var(--f);padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--paper);text-decoration:none}
+.fig .tagp a{background:var(--gold);color:var(--navy)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
+.stat{background:rgba(6,21,49,.6);border-radius:16px;padding:14px 8px 12px;text-align:center}
+.stat b{display:block;font:800 clamp(30px,8vw,46px)/1 var(--f);font-stretch:75%;font-variant-numeric:tabular-nums;color:var(--gold)}
+.stat span{display:block;font-size:12.5px;color:#b8c3dc;margin-top:6px;line-height:1.3}
+.stat.o{background:rgba(18,181,203,.18);box-shadow:inset 0 0 0 2px var(--fp)}
+.stat.o b{color:var(--fp)}
+.depbody{padding-top:30px}
+.card{background:#fff;border-radius:var(--r2);padding:20px 18px;margin-bottom:14px}
+.card h2{font-size:clamp(24px,5vw,32px)}
+.why{font-size:15px;color:var(--mut);margin:4px 0 14px}
+.bar{height:14px;background:#ece5d6;border-radius:999px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:999px}
+.bar.o i{background:var(--fp)}
+.ln{display:flex;justify-content:space-between;gap:10px;font-size:16px;align-items:baseline;flex-wrap:wrap}
+.ln b,.ln a{white-space:nowrap}
+.ln>a{font:800 20px var(--f);font-stretch:80%}
+.vote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.vote:last-child{border-bottom:0}
+.vote.o{background:var(--fpbg);margin:0 -12px;padding:14px 12px;border-radius:14px;border-bottom-color:transparent}
+.vt{font-size:16px;line-height:1.35}
+.vm{font-size:13.5px;color:var(--mut);grid-column:1}
+.tag{align-self:start;font:800 15px var(--f);padding:7px 12px;border-radius:12px;white-space:nowrap;text-align:center;min-width:100px;transform:rotate(-2deg)}
+.tS{background:var(--navy);color:var(--gold2)}.tN{background:var(--red);color:#fff}.tO{background:#e7e1f3;color:#43337a}.tA,.tP,.t-{background:#ece5d6;color:var(--mut);transform:none}
+.grp{border-radius:var(--r2);margin-top:10px;background:var(--paper)}
+.grp>summary{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;color:var(--ink);list-style:none}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary b{font:800 19px var(--f);font-stretch:85%}
+.grp>summary .n{font:800 30px/1 var(--f);font-stretch:75%;color:var(--navy);align-self:center;grid-row:1/3;grid-column:2;text-align:right}
+.grp>summary .d{font-size:14px;color:var(--mut);font-weight:500}
+.grp[open]{background:#fff;box-shadow:inset 0 0 0 2px var(--line)}
+.grp[open]>summary{border-bottom:2px solid var(--paper)}
+.dots{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0 4px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.dots i.j{background:#cfc5ae}.dots i.n{background:transparent;box-shadow:inset 0 0 0 2px var(--red)}
+.yr{padding:12px 0;border-bottom:1px solid var(--line)}
+.yr:last-child{border-bottom:0}
+.keyd{display:inline-flex;align-items:center;gap:5px;margin-right:10px;white-space:nowrap}
+.keyd i{width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.keyd i.j{background:#cfc5ae}.keyd i.n{background:transparent;box-shadow:inset 0 0 0 2px var(--red)}
+
+/* custódromo */
+.gauge{position:relative;max-width:520px;margin:10px auto 0}
+.gauge svg{display:block;width:100%;height:auto}
+.gauge .read{text-align:center;margin-top:6px}
+.live{display:block;font:800 clamp(30px,8.5vw,54px)/1 var(--f);font-stretch:75%;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:-.01em}
+.live small{font-size:.5em;color:var(--gold2);margin-right:4px}
+.read span{display:block;font-size:13.5px;color:#a9b5cf;margin-top:6px;font-weight:600}
+.speed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
+.speed div{background:rgba(255,255,255,.06);border-radius:16px;padding:12px 8px;text-align:center}
+.speed b{display:block;font:800 clamp(20px,5.5vw,30px)/1 var(--f);font-stretch:75%;color:var(--paper);font-variant-numeric:tabular-nums}
+.speed span{display:block;font-size:12.5px;color:#a9b5cf;margin-top:5px;line-height:1.3}
+/* barras de setor */
+.hb{display:grid;gap:10px;margin-top:12px}
+.hb .r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline}
+.hb .r b{font-size:15px;font-weight:600}
+.hb .r span{font:800 16px var(--f);font-stretch:80%;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hb .r i{grid-column:1/-1;display:block;height:14px;border-radius:999px;background:var(--gold);min-width:3px}
+.hb .r i.tr{background:repeating-linear-gradient(135deg,var(--gold) 0 6px,#e9c27a 6px 12px)}
+.hb .r em{grid-column:1/-1;font-style:normal;font-size:12.5px;color:var(--mut)}
+/* comparativo */
+.cmpf{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:14px 0}
+@media(min-width:680px){.cmpf{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}}
+.vs2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:6px}
+.side{background:var(--navy);color:var(--paper);border-radius:var(--r2);padding:16px 14px;text-align:center;position:relative}
+.side.win{box-shadow:0 0 0 3px var(--gold)}
+.side .crown{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);font:800 12.5px var(--f);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.side .av{margin:4px auto 8px}
+.side a{color:var(--paper);text-decoration:none;font-weight:800;font-size:17px;line-height:1.2;display:block}
+.side .sm{color:#a9b5cf}
+.side .nt{font:800 46px/1 var(--f);font-stretch:75%;color:var(--gold);margin-top:8px}
+.side .nt small{font-size:14px;color:#a9b5cf;font-weight:600}
+.crit{background:var(--paper);border-radius:var(--r2);padding:14px 16px;margin-top:10px}
+.crit h3{font-size:17px;margin:0 0 8px;font-stretch:90%}
+.crit .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.crit .two div{font:800 22px/1.1 var(--f);font-stretch:80%;font-variant-numeric:tabular-nums}
+.crit .two div.w{color:var(--gold3)}
+.crit .two div.w::after{content:" ✓";font-size:.8em}
+.crit .two small{display:block;font:500 12.5px var(--f);color:var(--mut);margin-top:2px}
+.crit p{margin:8px 0 0;font-size:14.5px;color:var(--mut)}
+.verdict{background:var(--goldbg);border-radius:var(--r2);padding:16px 18px;margin-top:12px;font-size:16.5px}
+.verdict b{font-size:18px}
+/* nota */
+.notab{display:inline-grid;place-items:center;min-width:46px;height:46px;padding:0 6px;border-radius:14px;background:var(--navy);color:var(--gold);font:800 22px/1 var(--f);font-stretch:75%;font-variant-numeric:tabular-nums}
+.money{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:18px}
+.money div{background:var(--gold);color:var(--navy);border-radius:18px;padding:14px 12px}
+.money div+div{background:var(--paper)}
+.money b{display:block;font:800 clamp(24px,6.5vw,38px)/1 var(--f);font-stretch:75%;font-variant-numeric:tabular-nums}
+.money span{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.3}
+.money a{color:inherit}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.crow b{font:800 20px var(--f);font-stretch:80%;text-align:right;font-variant-numeric:tabular-nums}
+.crow .bar{grid-column:1/-1;margin:2px 0 0}
+.crow .sm{grid-column:1/-1}
+.em{padding:12px 0;border-bottom:1px solid var(--line)}
+.em:last-child{border-bottom:0}
+.em .h{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:13.5px;color:var(--mut);align-items:center}
+.em p{margin:4px 0 0;font-size:15.5px;line-height:1.4}
+.em .v{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;margin-top:6px;color:var(--mut)}
+.em .v b{color:var(--ink);font-size:15px}
+footer{background:var(--navy);color:#b8c3dc;padding:34px 0 40px;font-size:14.5px}
+footer b{color:var(--gold)}
+[hidden]{display:none!important}
+@media(max-width:600px){table{font-size:15px}th,td{padding:9px 4px}}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="w"><a class="brand" href="#"><svg width="34" height="20" viewBox="0 0 34 20" aria-hidden="true"><g fill="#DDA544"><circle cx="4" cy="16" r="3"/><circle cx="8" cy="8" r="3"/><circle cx="17" cy="4" r="3"/><circle cx="26" cy="8" r="3"/><circle cx="30" cy="16" r="3"/></g><circle cx="17" cy="13" r="3" fill="#12B5CB"/></svg><span><b>Placar do Senado</b><small>Ranking da Direita</small></span></a>
+<nav class="nav" aria-label="Seções"><a href="#busca">Senadores</a><a href="#comparar">Comparar</a><a href="#custodromo">Custódromo</a><a href="#emendas">Emendas</a><a href="#buscar">Buscar</a><a href="#partidos">Partidos</a></nav></div></header>
+
+<nav class="tabs" aria-label="Seções">
+<a href="#busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6.5 8-6.5s7 2 8 6.5"/></svg>Senadores</a>
+<a href="#comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8l-3 6h6zM19 8l-3 6h6zM5 8h14"/></svg>Comparar</a>
+<a href="#custodromo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 17a9 9 0 1117 0"/><path d="M12 17l4-6"/></svg>Custódromo</a>
+<a href="#emendas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h16M4 18h7"/></svg>Emendas</a>
+<a href="#buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>Buscar</a>
+</nav>
+
+<main id="home">
+<div class="hero"><div class="w">
+<h1>Cada bolinha é um senador.</h1>
+<p class="lede">Toque numa delas e veja o que cada um dos 81 senadores fez de 2023 a 2026: presença nas votações, propostas, votos, quanto custou e para onde mandou emendas, com dados oficiais do Senado Federal e do Portal da Transparência. As cadeiras estão em ordem de presença nas votações nominais de 2025.</p>
+<div class="board"><svg id="plen" viewBox="0 0 1000 510" role="img" aria-label="Plenário com 81 cadeiras, em ordem de presença nas votações de 2025"></svg>
+<div class="center"><span class="num">81</span><span>senadores</span></div></div>
+<div class="axis" aria-hidden="true"><span>menos presença</span><span>mais presença</span></div>
+<div class="leg"><span><i style="background:#DDA544"></i>Presença comum</span><span><i style="background:#12B5CB"></i>Fora do padrão</span><span><i style="background:#2a3f6b"></i>Fora do mandato em 2025</span></div>
+<div class="how">
+<p><b>Todo número leva à fonte</b>Toque num número sublinhado para abrir a página oficial de onde ele saiu.</p>
+<p><b>Propostas em grupos simples</b>Leis, pedidos, perguntas, homenagens e outros. <a href="#regra">Veja como separamos</a>.</p>
+<p><b>Turquesa é fora do padrão</b>Marca o que fica muito longe do comum, em qualquer número. <a href="#padrao">Entenda a regra</a>.</p>
+</div>
+</div></div>
+
+<section class="sheet dark" id="custodromo" style="background:var(--navy2)"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3.5 17a9 9 0 1117 0"/><path d="M12 17l4-6"/></svg></span><h2>Custódromo do Senado</h2></div>
+<p class="intro">Quanto o Senado Federal já pagou neste ano com dinheiro dos impostos: salários, servidores, aposentadorias, gabinetes, prédios, contratos e todo o resto. O velocímetro mostra a velocidade do gasto, em reais por segundo.</p>
+<div class="gauge" id="gauge"></div>
+<div class="speed" id="speed"></div>
+<p class="sm" style="margin-top:14px" id="camnota"></p>
+</div></section>
+
+<section class="sheet" id="busca"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6.5 8-6.5s7 2 8 6.5"/></svg></span><h2>Encontre um senador</h2></div>
+<div class="f">
+<input id="q" type="search" placeholder="Digite o nome" aria-label="Nome do senador" autocomplete="off">
+<select id="fu" aria-label="Estado"><option value="">Todos os estados</option></select>
+<select id="fp" aria-label="Partido"><option value="">Todos os partidos</option></select>
+</div>
+<div class="chips" id="ord" role="group" aria-label="Ordem da lista"><button class="chip" data-o="nome" aria-pressed="true">A a Z</button><button class="chip" data-o="nota" aria-pressed="false">Maior nota</button><button class="chip" data-o="custo" aria-pressed="false">Mais caros</button><button class="chip" data-o="barato" aria-pressed="false">Mais baratos</button><button class="chip" data-o="emendas" aria-pressed="false">Mais emendas pagas</button></div>
+<p class="cnt" id="cnt"></p>
+<ul class="list" id="dl"></ul>
+<button class="btn" id="more">Mostrar mais senadores</button>
+</div></section>
+
+<section class="sheet white" id="comparar"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8l-3 6h6zM19 8l-3 6h6zM5 8h14"/></svg></span><h2>Compare dois senadores</h2></div>
+<p class="intro">Escolha dois nomes. O site coloca os números lado a lado e diz quem tem a melhor performance pela <a href="#nota">regra da nota</a>, e por quê.</p>
+<form class="cmpf" id="cform"><input id="ca" list="dnames" placeholder="Primeiro senador" aria-label="Primeiro senador" autocomplete="off"><input id="cb" list="dnames" placeholder="Segundo senador" aria-label="Segundo senador" autocomplete="off"><button class="sbtn" type="submit">Comparar</button></form>
+<datalist id="dnames"></datalist>
+<div id="cres"></div>
+</div></section>
+
+<section class="sheet" id="emendas"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h10M4 12h16M4 18h7"/></svg></span><h2>Para onde foram as emendas pagas</h2></div>
+<p class="intro">Emendas são verbas do Orçamento que cada senador indica para estados, municípios e entidades. Aqui entra só o dinheiro que <b>já foi pago</b> (inclusive o pago em anos seguintes, os "restos a pagar"), não o que foi apenas reservado (empenhado). Soma das emendas individuais dos senadores atuais nos Orçamentos de 2024, 2025 e 2026, os votados nesta legislatura.</p>
+<div class="card" style="margin-top:14px"><p class="cnt" id="settot" style="margin-top:0"></p><div class="hb" id="setbars"></div></div>
+<details><summary>De onde vem o setor de cada emenda</summary><p class="sm">O setor é a "função" oficial da despesa, a classificação que o próprio governo usa no Orçamento (Saúde, Educação, Urbanismo, Agricultura e assim por diante). As <b>transferências especiais</b> (as chamadas "emendas Pix") vão direto para o caixa do município ou do estado, que decide onde usar; por isso aparecem num grupo separado, listrado. Fonte: arquivo oficial de emendas parlamentares do Portal da Transparência (Controladoria-Geral da União), com os valores empenhado, liquidado e pago de cada emenda. As emendas são ligadas a cada senador pelo nome do autor registrado no sistema do governo (SIAFI).</p></details>
+</div></section>
+
+<section class="sheet white" id="buscar"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span><h2>O que pediram para o seu estado</h2></div>
+<p class="intro">Digite um estado (como <i>Bahia</i> ou <i>BA</i>) ou um assunto (como <i>creche</i>, <i>BR-116</i>, <i>autismo</i>). Aparece tudo o que os senadores atuais apresentaram de 2023 a 2026 sobre isso, e quem assinou.</p>
+<form class="sbox" id="sform" role="search"><input id="sq" type="search" placeholder="Estado ou assunto" aria-label="Estado ou assunto" autocomplete="off"><button class="sbtn" type="submit">Buscar</button></form>
+<div class="chips" id="sex"></div>
+<div id="sres" class="results"></div>
+<details><summary>Como a busca funciona</summary>
+<p class="sm">A busca olha o resumo oficial (a ementa) de cada proposta. Para estado, procura o nome do estado ou a sigla (como "/BA") no resumo. Entram propostas de lei, indicações, perguntas e cobranças e homenagens dos senadores que estão hoje em exercício. Ficam de fora os pedidos sobre a pauta, emendas e outros papéis internos. Dica: digite só o começo da palavra para pegar variações (<i>autis</i> encontra autismo e autista).</p></details>
+</div></section>
+
+<section class="sheet" id="repetidas"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a3 3 0 013-3h12l-3-3M20 13v2a3 3 0 01-3 3H5l3 3"/></svg></span><h2>Pedidos que voltam várias vezes</h2></div>
+<p class="intro">O mesmo tipo de proposta, com o mesmo resumo, apresentado mais de uma vez. Veja a contagem, as datas e quem assinou.</p>
+<div class="warn"><p style="margin:0"><b>Projeto repetido não prova que o Senado ignorou o assunto.</b> Muitas vezes vários senadores apresentam o mesmo pedido ao mesmo tempo, um senador reapresenta para registrar de novo, o Senado junta os projetos iguais para analisar tudo de uma vez ("tramitação conjunta"), ou a resposta veio por outro caminho. A repetição só mostra que o assunto foi pedido de novo.</p></div>
+<div class="chips" id="rmin"><button class="chip" data-m="3" aria-pressed="true">3 vezes ou mais</button><button class="chip" data-m="2" aria-pressed="false">2 vezes ou mais</button></div>
+<input id="rq" type="search" placeholder="Filtrar por palavra ou estado" aria-label="Filtrar repetidas" autocomplete="off">
+<p class="cnt" id="rcnt"></p>
+<div id="rl"></div>
+<button class="btn" id="rmore">Mostrar mais</button>
+<details><summary>Como contamos as repetições</summary>
+<p class="sm">Mesmo tipo de proposta (por exemplo, Projeto de Lei ou Requerimento) e mesmo resumo oficial, ignorando acentos, pontuação e o trecho "e dá outras providências". Resumos genéricos ("Altera a Lei nº X", sem dizer para quê) e resumos vagos ficam de fora, porque o mesmo texto pode esconder pedidos diferentes. Fonte: proposições de autoria de cada senador atual, Dados Abertos do Senado, 2023 a 2026.</p></details>
+</div></section>
+
+<section class="sheet dark" id="votacoes"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span><h2>As __N21__ votações que dividiram o plenário</h2></div>
+<p class="intro">Votações nominais abertas de projetos e propostas de emenda à Constituição em 2025 e 2026 em que o lado que perdeu teve pelo menos 20% dos votos. Na página de cada senador aparece como ele votou em cada uma. Votações secretas (como indicação de autoridades) não mostram o voto de cada um e ficam de fora.</p>
+<div class="votes" id="vl"></div>
+</div></section>
+
+<section class="sheet dark" id="partidos" style="background:var(--navy)"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg></span><h2>Quantas vezes votaram do mesmo lado</h2></div>
+<p class="intro">Em cada votação nominal aberta do plenário, olhamos para que lado foi a maioria dos senadores de cada partido (Sim ou Não). Quando as duas maiorias foram para o mesmo lado, conta como "votaram do mesmo lado". Cada bolinha é uma votação em cada 100; as acesas são as do mesmo lado.</p>
+<div class="seg" role="group" aria-label="Quais votações" id="pch">
+<button class="chip" id="c-div" data-f="divididas" aria-pressed="true">Só as divididas</button>
+<button class="chip" id="c-all" data-f="todas" aria-pressed="false">Todas as votações</button>
+</div>
+<div class="pboard" id="pl"></div>
+<p class="sm" style="margin-top:14px">"Centro" aqui é a soma de MDB, PSD, PP, União Brasil e Republicanos. O Novo tem poucos senadores, por isso a posição do partido em cada votação pode ser a de um ou dois votos. Votação dividida: o lado que perdeu teve pelo menos 20% dos votos. Fonte: <a href="https://legis.senado.leg.br/dadosabertos/docs/" target="_blank" rel="noopener">votações nominais dos Dados Abertos do Senado</a>, 2023 a 2026.</p>
+<details><summary>Ver a tabela completa de todos os partidos</summary>
+<div class="mxwrap"><p class="sm">Porcentagem das votações nominais abertas do plenário (2023 a 2026) em que os dois partidos votaram do mesmo lado. Entram só os partidos com senadores em pelo menos 20 votações. Quanto mais dourado, mais vezes juntos. Arraste para o lado para ver todas as colunas.</p>
+<div class="scroll"><table class="mx" id="mx"></table></div></div>
+</details>
+</div></section>
+
+<section class="sheet white" id="glossario"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a4 4 0 014 4v12H9a4 4 0 01-4-4z"/><path d="M5 16a4 4 0 014-4h10"/></svg></span><h2>O que quer dizer cada palavra</h2></div>
+<dl>
+<div><dt>Plenário</dt><dd>A reunião em que todos os 81 senadores podem votar. É onde se decide se um projeto é aprovado no Senado.</dd></div>
+<div><dt>Votação nominal</dt><dd>Votação em que cada senador registra o voto no painel eletrônico. Quando é aberta, fica público quem votou como. Em votações simbólicas, ninguém registra o voto.</dd></div>
+<div><dt>Votação secreta</dt><dd>Votação nominal em que só se sabe quem votou, não como votou. Acontece, por exemplo, na aprovação de autoridades e embaixadores.</dd></div>
+<div><dt>Sim e Não</dt><dd>Sim é a favor do que está sendo votado. Não é contra.</dd></div>
+<div><dt>Abstenção</dt><dd>O senador registra o voto, mas não vota nem Sim nem Não.</dd></div>
+<div><dt>Presente sem voto</dt><dd>O senador marcou presença na votação, mas não registrou voto. Aparece nos dados oficiais como "P-NRV".</dd></div>
+<div><dt>Presidente</dt><dd>Quem preside a sessão normalmente não vota (art. 51 do Regimento do Senado).</dd></div>
+<div><dt>Ausência justificada</dt><dd>O senador não votou por estar em atividade parlamentar fora do plenário, em missão oficial ou de licença (saúde, interesse particular e outras). Vem marcada nos dados oficiais.</dd></div>
+<div><dt>Ausência sem justificativa</dt><dd>O senador estava no mandato, não votou e não havia justificativa registrada. Aparece nos dados oficiais como "NCom" (não compareceu).</dd></div>
+<div><dt>Orientação do Governo</dt><dd>Antes de cada votação, o líder do Governo diz como acha que os senadores devem votar.</dd></div>
+<div><dt>PL, Projeto de Lei</dt><dd>Proposta para criar ou mudar uma lei comum.</dd></div>
+<div><dt>PLP, Projeto de Lei Complementar</dt><dd>Lei sobre assuntos que a Constituição manda tratar em lei complementar, como regras de impostos e de gastos públicos. Precisa de mais votos para passar.</dd></div>
+<div><dt>PEC, Proposta de Emenda à Constituição</dt><dd>Proposta para mudar a Constituição. Precisa de 3 em cada 5 senadores (49 votos), em dois turnos.</dd></div>
+<div><dt>PDL, Projeto de Decreto Legislativo</dt><dd>Decisão do Congresso que não precisa da assinatura do presidente, por exemplo para derrubar um decreto do governo.</dd></div>
+<div><dt>PRS, Projeto de Resolução</dt><dd>Regra interna do Senado ou assunto que a Constituição dá só ao Senado, como autorizar empréstimos de estados.</dd></div>
+<div><dt>Requerimento</dt><dd>Pedido formal: pedir informações a um ministério, pedir urgência para um projeto, sessão especial, voto de aplauso. Não muda nenhuma lei.</dd></div>
+<div><dt>Indicação</dt><dd>Sugestão que o senador envia ao governo ou a outro órgão. Não tem força de lei.</dd></div>
+<div><dt>CEAPS</dt><dd>Cota para o Exercício da Atividade Parlamentar dos Senadores: dinheiro que o senador usa para escritório, viagens, combustível, divulgação e consultorias, com reembolso mediante nota fiscal.</dd></div>
+</dl>
+</div></section>
+
+<section class="sheet white" id="nota"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><h2>Como a nota é calculada</h2></div>
+<p class="intro">A nota vai de 0 a 10 e usa a mesma regra para todos os 81 senadores. Ela junta quatro números oficiais. Em cada um, o senador ganha uma nota de 0 a 10 conforme a posição dele entre todos: 10 é o melhor de todos, 0 o pior, 5 fica no meio. A nota final é a média das quatro.</p>
+<ul class="rule groups">
+<li data-i="1"><span><b>Presença nas votações.</b> Em quantas votações nominais do plenário ele estava presente (votou, registrou presença ou presidia), de 2023 a 2026, sobre quantas houve enquanto estava no mandato. O Senado não publica a lista de presença das sessões em dados abertos, então usamos as votações. Mais é melhor.</span></li>
+<li data-i="2"><span><b>Participação nas votações.</b> Em quantas votações nominais ele de fato votou (Sim, Não, Abstenção ou voto secreto), sobre quantas houve enquanto estava no mandato. Mais é melhor.</span></li>
+<li data-i="3"><span><b>Leis que avançaram.</b> Projetos de lei, de lei complementar, de emenda à Constituição ou de decreto legislativo em que ele é o autor principal e que viraram lei ou já foram aprovados no Senado. Mais é melhor.</span></li>
+<li data-i="4"><span><b>Custo por mês.</b> Cota parlamentar (CEAPS) mais os outros gastos ligados ao gabinete que o Senado publica por senador (diárias, correios, passagens e materiais), dividido pelos meses de mandato. Menos é melhor.</span></li>
+</ul>
+<p>Quem esteve pouco tempo no mandato (menos de 20 votações nominais ou menos de 3 meses de exercício) fica sem nota naquele critério, e a média usa só os outros.</p>
+<div class="warn"><p style="margin:0"><b>A nota é uma conta, não um juízo sobre a pessoa.</b> Ela mede só o que dá para medir com dados oficiais. Não mede a qualidade dos projetos, as posições políticas, o trabalho nas comissões nem o atendimento ao eleitor. Use junto com o resto da página.</p></div>
+<h3 style="margin-top:22px">O custo do mandato</h3>
+<p><b>Salário:</b> o subsídio mensal fixado no Decreto Legislativo 172/2022, o mesmo dos deputados (R$ 39.293,32 até março de 2023; R$ 41.650,92 de abril de 2023; R$ 44.008,52 de fevereiro de 2024; R$ 46.366,19 de fevereiro de 2025), contado em cada mês em que o senador esteve em exercício, segundo os períodos de exercício publicados pelo Senado. <b>Cota parlamentar (CEAPS):</b> soma dos reembolsos publicados pelo Senado, nota por nota. <b>Outros gastos do gabinete:</b> diárias de viagens oficiais, correios, passagens compradas pelo Senado e materiais, como o Senado publica para cada senador. Ficam de fora, porque o Senado não publica o valor por senador: os salários dos servidores do gabinete e dos escritórios de apoio (mostramos quantas pessoas trabalham com ele), imóvel funcional, auxílio-moradia, plano de saúde, previdência e 13º. Por isso o custo real é maior do que o mostrado.</p>
+<p><b>Custódromo:</b> o valor oficial pago pelo Senado no ano (despesas pagas mais restos a pagar pagos), da página de execução orçamentária da Transparência do Senado, lido pelo robô todo dia. Entre uma leitura e outra, o contador avança no ritmo médio de gasto do ano, por isso o número que corre na tela é uma estimativa. O velocímetro mostra esse ritmo em reais por segundo.</p>
+</div></section>
+
+<section class="sheet" id="padrao"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true" style="background:var(--fp);color:var(--navy)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="8"/></svg></span><h2>O que é "fora do padrão"</h2></div>
+<p class="intro">A cor <span class="fp">turquesa</span> aparece quando um número fica muito longe do que é comum. A regra é a mesma para tudo no site e não é opinião: é uma conta estatística usada no mundo todo (a regra de Tukey).</p>
+<ol class="rule">
+<li><span>Pegamos o número de todos os senadores comparáveis e colocamos em ordem.</span></li>
+<li><span>Olhamos a faixa do meio, onde ficam metade deles: do primeiro quarto até o terceiro quarto.</span></li>
+<li><span>Se o número fica mais de uma vez e meia o tamanho dessa faixa abaixo ou acima dela, ele sai do padrão.</span></li>
+</ol>
+<p><b>Com quem cada um é comparado:</b> presença e votações, com todos os senadores que estavam no mandato o ano inteiro; votos junto com partidos e com o Governo, com os colegas do mesmo partido; quantidade de propostas por grupo, com todos os 81; votações divididas, com a maioria do partido atual dele; tabela de partidos, com as outras células da tabela; pedidos repetidos, com os outros pedidos repetidos 3 vezes ou mais.</p>
+<div class="warn"><p style="margin:0"><b>Sair do padrão não é bom nem ruim.</b> Um senador pode ter presença baixa por licença médica ou por ter assumido um ministério, e pode votar diferente do partido por convicção. A cor só aponta onde vale a pena olhar com mais atenção.</p></div>
+</div></section>
+
+<section class="sheet white" id="regra"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg></span><h2>Como as propostas foram separadas em grupos</h2></div>
+<p class="intro">Todo senador apresenta muitos tipos de papel no Senado: projetos de lei, pedidos de informação, homenagens, pedidos sobre a pauta. Para ficar fácil de entender, cada proposta de 2023 a 2026 foi colocada em um de cinco grupos. A regra é a mesma para todos os 81 senadores e usa só o que o próprio Senado registra: o tipo do documento, o assunto do requerimento e o resumo oficial (a "ementa").</p>
+<ul class="rule groups">
+<li data-i="H"><span><b>Homenagens.</b> Requerimentos de sessão especial ou comemoração, votos de aplauso, congratulações, solidariedade e pesar. Também entram os projetos de lei cujo resumo cria uma data comemorativa (Dia, Semana ou Mês Nacional), dá nome a rodovia, ponte ou prédio, dá título de "Capital Nacional", põe alguém no Livro dos Heróis da Pátria, cria medalha ou prêmio, ou declara algo patrimônio cultural.</span></li>
+<li data-i="L"><span><b>Propostas de lei.</b> Os demais Projetos de Lei (PL), de Lei Complementar (PLP), Propostas de Emenda à Constituição (PEC), Projetos de Decreto Legislativo (PDL) e de Resolução (PRS). Aparecem nesta ordem: os que viraram lei, os aprovados no Senado (enviados à Câmara ou à sanção), os prontos para votação, os em análise e, por último, os arquivados, prejudicados ou retirados. A ordem mostra até onde cada projeto chegou, não se ele é bom ou ruim.</span></li>
+<li data-i="M"><span><b>Pedidos de melhoria para o país.</b> Indicações, as sugestões que o senador envia ao governo e a outros órgãos.</span></li>
+<li data-i="P"><span><b>Perguntas e cobranças.</b> Pedidos de informação a ministérios e órgãos, convocação e convite de ministros e autoridades, CPIs, fiscalização e diligências.</span></li>
+<li data-i="O"><span><b>Outros.</b> Todo o resto: pedidos sobre a pauta e o andamento das votações (urgência, adiamento, desarquivamento, calendário especial), audiências públicas e debates, missões oficiais, votos de censura ou repúdio, emendas e documentos de organização interna.</span></li>
+</ul>
+<p>Uma proposta entra em um grupo só. Quando um senador assina junto com outros, a proposta conta para todos que assinaram, como faz o Senado. Ao lado de cada proposta aparece se ele é o autor principal (o primeiro nome da autoria oficial) ou coautor.</p>
+<p class="sm">Fonte: proposições de autoria de cada senador atual, apresentadas de 01/02/2023 até __DATA__, Dados Abertos do Senado: __NPROP__ propostas.</p>
+</div></section>
+
+<section class="sheet" id="fontes"><div class="w">
+<div class="sec-h"><span class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg></span><h2>De onde vêm os números</h2></div>
+<p><b>Senadores, mandatos, votações e propostas:</b> Dados Abertos Legislativos do Senado Federal (legis.senado.leg.br/dadosabertos), lidos em __DATA__: lista de senadores em exercício, períodos de exercício de cada um, todas as votações nominais do plenário de 01/02/2023 a __ULTIMA__ (__NVOT__ votações, com o voto ou a ausência de cada senador), a orientação de cada liderança e as proposições de autoria de cada senador.</p>
+<p><b>Presença:</b> o Senado não publica em dados abertos a lista de presença de cada sessão. Por isso a presença do site é a presença nas votações nominais: em cada votação, os dados oficiais dizem se o senador votou, estava presente sem votar, presidia, estava ausente com justificativa (atividade parlamentar, missão, licença) ou não compareceu.</p>
+<p><b>Custos:</b> Dados Abertos Administrativos do Senado (adm.senado.gov.br): reembolsos da cota parlamentar (CEAPS) e recursos usados por senador. Salário pelo Decreto Legislativo 172/2022. O robô confere se o total da cota bate entre as duas fontes do Senado.</p>
+<p><b>Emendas:</b> arquivo oficial de emendas parlamentares do Portal da Transparência, da Controladoria-Geral da União, com empenhado, liquidado e pago de cada emenda.</p>
+<p><b>Gasto do Senado no ano:</b> página de execução orçamentária e financeira da Transparência do Senado (dados do SIAFI).</p>
+</div></section>
+</main>
+
+<main id="dep" hidden></main>
+
+<footer><div class="w"><p><b>Placar do Senado, do Ranking da Direita.</b> Dados públicos do Senado Federal (legis.senado.leg.br, adm.senado.gov.br e senado.leg.br) e do Portal da Transparência, atualizados em __DATA__ por um robô que confere os dados antes de publicar. A nota segue uma regra pública e igual para todos; o site não dá opinião, só mostra os números e a conta.</p></div></footer>
+
+<script>
+{
+const PES=__PES__;const CUS=__CUS__;const EMD=__EMD__;const NOTA=__NOTA__;const SET=__SET__;const SETT=__SETT__;const CAM=__CAM__;
+const DEPS=__DEPS__;const VY=__VY__;const RES=__RES__;const OFF=__OFF__;const PP=__PP__;const COD=__COD__;const VOT=__VOT__;const R=__RANK__;const MX=__MATRIX__;
+const Y=[2023,2024,2025,2026];
+const cuM=new Map(CUS.map(r=>[r[0],r])),emM=new Map(EMD.map(r=>[r[0],r])),ntM=new Map(NOTA.map(r=>[r[0],r]));
+const brl=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const brlc=v=>{v=Number(v);const f=(x,s)=>'R$ '+x.toLocaleString('pt-BR',{maximumFractionDigits:x<10?2:1})+' '+s;return v>=1e9?f(v/1e9,'bi'):v>=1e6?f(v/1e6,'mi'):v>=1e3?f(v/1e3,'mil'):brl(v)};
+const n1=v=>v==null?'–':Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const C='https://www25.senado.leg.br';const SEN=id=>`${C}/web/senadores/senador/-/perfil/${id}`;const MAT=id=>`${C}/web/atividade/materias/-/materia/${id}`;const DA='https://legis.senado.leg.br/dadosabertos';
+const nm={PL:'PL',NOVO:'Novo','MISSÃO':'Missão',PT:'PT',UNIÃO:'União',REPUBLICANOS:'Republicanos',PODE:'Podemos',SOLIDARIEDADE:'Solidariedade',AVANTE:'Avante',CIDADANIA:'Cidadania',REDE:'Rede',CENTRO:'Centro'};
+const N=s=>nm[s]||s;
+const fmt=n=>Number(n).toLocaleString('pt-BR');
+const pc=x=>x==null||x===''?null:Number(x);
+const f1=x=>x.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const offM=new Map(OFF.map(r=>[r[0],r])),ppM=new Map(PP.map(r=>[r[0],r])),codM=new Map(COD);
+const vyM=new Map(VY.v.map(r=>[r[0],r]));const VYM=new Map(VY.v.map(r=>[r[0],r]));const VYT=VY.tot;const resM=new Map(RES.idx.map(r=>[r[0],r]));const SUBS=RES.subs;
+const L=DEPS.map(r=>{const o=offM.get(r[0]);const y=Y.map((yr,i)=>{const b=1+i*5;return {ano:yr,prop:o[b],vot:o[b+1],p:o[b+2],aj:o[b+3],an:o[b+4]}});
+  return {id:r[0],n:r[1],p:r[2],uf:r[3],vn:r[4],vt:r[5],S:r[6],No:r[7],O:r[8],A:r[9],fi:pc(r[10]),pt:pc(r[11]),pl:pc(r[12]),gv:pc(r[13]),y,pj:ppM.get(r[0])[3],cod:codM.get(r[0])||'',rs:resM.get(r[0])||[r[0],0,0,0,0,0,0,0,0],cu:cuM.get(r[0]),em:emM.get(r[0]),nt:ntM.get(r[0])}});
+const RANK=[...L].filter(d=>d.nt&&d.nt[1]!=null).sort((a,b)=>b.nt[1]-a.nt[1]);RANK.forEach((d,k)=>d.pos=k+1);
+const CMES=L.map(d=>d.nt&&d.nt[9]).filter(v=>v!=null);
+
+// ===== regra "fora do padrão": a mesma para todos os números (Tukey: abaixo de Q1 - 1,5×IQR ou acima de Q3 + 1,5×IQR)
+const qtl=(a,q)=>{const s=[...a].sort((x,y)=>x-y);const p=(s.length-1)*q,b=Math.floor(p);return s[b]+(s[Math.min(b+1,s.length-1)]-s[b])*(p-b)};
+const fence=a=>{if(a.length<5)return null;const q1=qtl(a,.25),q3=qtl(a,.75),r=q3-q1;return [q1-1.5*r,q3+1.5*r]};
+const outOf=(v,f)=>f&&v!=null&&(v<f[0]?'abaixo':v>f[1]?'acima':null);
+const FP=`<span class="fp" title="Muito acima ou muito abaixo do que é comum entre os senadores">fora do padrão</span>`;
+const modeTot=Y.map((_,k)=>{const c={};L.forEach(d=>{const y=d.y[k],t=y.p+y.aj+y.an;if(t)c[t]=(c[t]||0)+1});return +Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]});
+L.forEach(d=>{d.o={};d.y.forEach((y,k)=>{const t=y.p+y.aj+y.an;y.pct=t>=modeTot[k]*.5?100*y.p/t:null;const v=(vyMap(d.id)||[])[k+1];y.vpct=(t===modeTot[k]&&v!=null)?100*v/VYT[k]:null})});
+function vyMap(id){return VYM.get(id)}
+const F_pres=Y.map((_,k)=>fence(L.map(d=>d.y[k].pct).filter(v=>v!=null)));
+const F_vot=Y.map((_,k)=>fence(L.map(d=>d.y[k].vpct).filter(v=>v!=null)));
+const byP={};L.forEach(d=>(byP[d.p]=byP[d.p]||[]).push(d));
+const F_al={};for(const k of ['fi','pt','pl','gv']){F_al[k]={};for(const p in byP)F_al[k][p]=fence(byP[p].map(d=>d[k]).filter(v=>v!=null))}
+const F_grp=[1,2,3,4,5].map(i=>fence(L.map(d=>d.rs[i])));
+const F_cm=fence(CMES);L.forEach(d=>{d.ocm=outOf(d.nt&&d.nt[9],F_cm)});
+L.forEach(d=>{d.y.forEach((y,k)=>{y.op=outOf(y.pct,F_pres[k]);y.ov=outOf(y.vpct,F_vot[k])});
+  for(const k of ['fi','pt','pl','gv'])d.o[k]=outOf(d[k],F_al[k][d.p]);d.og=[1,2,3,4,5].map((i,j)=>outOf(d.rs[i],F_grp[j]))});
+// voto diferente da maioria do partido em cada uma das 21 votações (partido atual)
+const MAJ={};for(const p in byP){MAJ[p]=VOT.map((_,i)=>{let s=0,n=0;byP[p].forEach(d=>{const c=d.cod[i];if(c==='S')s++;else if(c==='N'||c==='O')n++});return s+n<3?null:s>n?'S':n>s?'N':null})}
+L.forEach(d=>{d.ov21=VOT.map((_,i)=>{const c=d.cod[i],m=MAJ[d.p][i];if(!m||!c)return false;const mine=c==='S'?'S':(c==='N'||c==='O')?'N':null;return mine&&mine!==m})});
+const ini=n=>n.replace(/^(Dr\.?|Dra\.?|Pr\.|Prof\.?|Professora?|Delegad[oa]|Coronel|Capitão|Cabo|General|Sargento|Pastor|Missionário|Defensor|Enfermeira)\s+/i,'').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const presURL=(id,a)=>`${DA}/senador/${id}/votacoes?ano=${a}`;
+const votURL=presURL;
+const propURL=(id,a)=>`${DA}/processo?codigoParlamentarAutor=${id}&dataInicioApresentacao=${a}-01-01&dataFimApresentacao=${a}-12-31`;
+const projURL=id=>SEN(id);
+const A=(u,t)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
+
+// filtros
+const fu=document.getElementById('fu'),fp=document.getElementById('fp'),q=document.getElementById('q');
+[...new Set(L.map(d=>d.uf))].sort().forEach(u=>fu.insertAdjacentHTML('beforeend',`<option>${u}</option>`));
+[...new Set(L.map(d=>d.p))].sort((a,b)=>N(a).localeCompare(N(b))).forEach(p=>fp.insertAdjacentHTML('beforeend',`<option value="${p}">${N(p)}</option>`));
+let lim=30;
+let ORD='nome';
+function row(d){const nt=d.nt&&d.nt[1];const cu=d.cu?d.cu[1]:0;
+  const extra=ORD==='emendas'?`${brlc(d.em?d.em[3]:0)} em emendas pagas`:`custou ${brlc(cu)}`;
+  return `<li class="item"><div class="av" aria-hidden="true">${ini(d.n)}</div><div><a class="nm" href="#d-${d.id}">${esc(d.n)}</a><span class="sm">${N(d.p)}-${d.uf}, ${extra}</span></div><div class="pr"><span class="notab" title="Nota de 0 a 10">${n1(nt)}</span><br>nota</div></li>`}
+function list(){const s=norm(q.value.trim());
+  const a=L.filter(d=>(!fu.value||d.uf===fu.value)&&(!fp.value||d.p===fp.value)&&(!s||norm(d.n).includes(s))).sort(ORD==='nota'?(x,y)=>((y.nt&&y.nt[1])??-1)-((x.nt&&x.nt[1])??-1):ORD==='custo'?(x,y)=>(y.cu?y.cu[1]:0)-(x.cu?x.cu[1]:0):ORD==='barato'?(x,y)=>((x.nt&&x.nt[9])??1e12)-((y.nt&&y.nt[9])??1e12):ORD==='emendas'?(x,y)=>(y.em?y.em[3]:0)-(x.em?x.em[3]:0):(x,y)=>x.n.localeCompare(y.n,'pt'));
+  document.getElementById('cnt').textContent=a.length===1?'1 senador':a.length+' senadores';
+  document.getElementById('dl').innerHTML=a.length?a.slice(0,lim).map(row).join(''):'<li class="sm" style="padding:16px;background:#fff;border-radius:20px">Nenhum senador encontrado com esse nome ou filtro.</li>';
+  document.getElementById('more').hidden=a.length<=lim}
+[q,fu,fp].forEach(e=>e.addEventListener('input',()=>{lim=30;list()}));
+document.getElementById('more').addEventListener('click',()=>{lim+=60;list()});
+document.getElementById('ord').addEventListener('click',e=>{const b=e.target.closest('[data-o]');if(!b)return;ORD=b.dataset.o;lim=30;document.querySelectorAll('#ord .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));list()});
+list();
+
+
+// ===== plenário de 81 cadeiras (ordem de presença em 2025)
+{const svg=document.getElementById('plen');const R0=200,R1=470,rows=5,cx=500,cy=490;const pos=[];
+ const radii=Array.from({length:rows},(_,i)=>R0+(R1-R0)*i/(rows-1));const tot=radii.reduce((a,b)=>a+b,0);
+ let left=L.length;radii.forEach((r,i)=>{let n=i===rows-1?left:Math.round(L.length*r/tot);left-=n;for(let k=0;k<n;k++){const a=Math.PI*(1-(k+.5)/n);pos.push([cx+r*Math.cos(a),cy-r*Math.sin(a),a])}});
+ pos.sort((p,q)=>q[2]-p[2]);
+ const ord=[...L].sort((a,b)=>{const x=a.y[2].pct,y=b.y[2].pct;if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return x-y});
+ svg.innerHTML=ord.map((d,i)=>{const [x,y]=pos[i];const c=d.y[2].pct==null?'#2a3f6b':d.y[2].op?'#12B5CB':'#DDA544';
+  return `<a href="#d-${d.id}"><circle class="seat" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="24" fill="${c}" style="animation-delay:${Math.round(i*14)}ms"><title>${esc(d.n)} (${N(d.p)}-${d.uf}): ${d.y[2].pct==null?'sem dados em 2025':Math.round(d.y[2].pct)+'% de presença nas votações de 2025'}</title></circle></a>`}).join('')}
+// votações
+const dt=s=>s.split('-').reverse().join('/');
+document.getElementById('vl').innerHTML=VOT.map(v=>{const s=100*v[4]/(v[4]+v[5]);return `<div class="vcard"><b>${esc(v[6])}</b><div class="split" role="img" aria-label="${v[4]} votos Sim e ${v[5]} votos Não"><i style="width:${s.toFixed(1)}%"></i></div><div class="splitl"><span>${fmt(v[4])} Sim</span><span>${fmt(v[5])} Não</span></div><div class="vm">${dt(v[1])}, ${A(MAT(v[3]),v[2])}</div></div>`}).join('');
+
+// partidos
+let F='divididas';
+const pairs=[['PL','PT'],['NOVO','PT'],['PL','CENTRO'],['NOVO','CENTRO']];
+const SRC='https://legis.senado.leg.br/dadosabertos/docs/';
+function parts(){document.getElementById('pl').innerHTML=pairs.map(([a,b])=>{const v=R[a][b][F],p=100*v[0]/v[1],on=Math.round(p);
+  return `<div class="pair"><span class="nm">${N(a)} <span style="color:#8f9cbb;font-weight:600">e</span> ${N(b)}</span><span class="val">${A(SRC,f1(Math.round(p*10)/10))}</span><div class="seats" aria-hidden="true">${Array.from({length:100},(_,k)=>`<i${k<on?' class="on"':''}></i>`).join('')}</div><span class="sm">Do mesmo lado em ${fmt(v[0])} de ${fmt(v[1])} votações</span></div>`}).join('')}
+document.querySelectorAll('#pch .chip').forEach(b=>b.addEventListener('click',()=>{F=b.dataset.f;document.querySelectorAll('#pch .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));parts()}));
+parts();
+{const FMX=fence(MX.M.flatMap((r,i)=>r.filter((v,j)=>i!==j&&v).map(v=>100*v[0]/v[1])));const P=MX.P;let h='<thead><tr><th>Partido</th>'+P.map(p=>`<th>${N(p)}</th>`).join('')+'</tr></thead><tbody>';
+P.forEach((a,i)=>{h+=`<tr><th>${N(a)}</th>`+P.map((b,j)=>{if(i===j)return '<td>–</td>';const v=MX.M[i][j],p=Math.round(100*v[0]/v[1]);const o=outOf(100*v[0]/v[1],FMX);const bg=o?'background:#12B5CB;color:#061531':`background:rgba(221,165,68,${(p/100*.85).toFixed(2)})`;return `<td style="${bg}" title="${v[0]} de ${v[1]} votações${o?' · fora do padrão':''}"><a href="${SRC}" target="_blank" rel="noopener">${p}%</a></td>`}).join('')+'</tr>'});
+document.getElementById('mx').innerHTML=h+'</tbody>'}
+
+
+const GR=[['L','Propostas de lei','Projetos que criam ou mudam leis, ou mudam a Constituição. Primeiro os que viraram lei.'],
+['M','Pedidos de melhoria para o país','Indicações: sugestões ao governo e a outros órgãos.'],
+['P','Perguntas e cobranças','Pedidos de informação, convocação de ministros, CPIs e fiscalização.'],
+['H','Homenagens','Aplausos, pesar, sessões especiais, datas comemorativas, nomes de obras, títulos.'],
+['O','Outros','Pedidos sobre a pauta, audiências, missões, censuras, emendas e organização interna.']];
+const ST={1:'Virou lei',2:'Aprovada no Senado',3:'Pronta para votação',4:'Em análise',5:'Arquivada ou retirada'};
+let CACHE={};
+async function loadProps(id){if(CACHE[id])return CACHE[id];const r=await fetch('s/'+(id%64)+'.json');if(!r.ok)throw new Error('falha');const j=await r.json();CACHE={};CACHE[id]=j[id]||[];return CACHE[id]}
+function propItem(p){const [id,lab,dt,g,si,et,pr,em]=p;
+  return `<div class="pi"><div class="h">${A(MAT(id),esc(lab))}<span>${dt.split('-').reverse().join('/')}</span><span>${pr?'Autor principal':'Coautor'}</span>${g==='L'?`<span class="st st${et}">${ST[et]}</span>`:''}</div><p>${esc(em)||'<span class="sm">Sem resumo oficial.</span>'}</p></div>`}
+function wireEm(d){const det=document.getElementById('emlist');if(!det)return;let done=false;det.addEventListener('toggle',async()=>{if(!det.open||done)return;done=true;const box=det.querySelector('.gb');
+  try{const j=await fetch('e/'+(d.id%64)+'.json').then(r=>{if(!r.ok)throw 0;return r.json()});const it=j[d.id]||[];
+    box.innerHTML=it.map(([a,org,ds,au,emp,pg,s])=>`<div class="em"><div class="h"><b>${a}</b><span class="gtag">${SET[s]}</span></div><p>${esc(ds)}</p><span class="sm">${esc(org)}</span><div class="v"><span>Pago <b>${brl(pg)}</b></span><span>Empenhado ${brl(emp)}</span><span>Liquidado ${brl(au)}</span></div></div>`).join('')}
+  catch(e){box.innerHTML='<p class="sm">Não foi possível carregar agora. Tente de novo em instantes.</p>';done=false}})}
+function wireGroups(d){document.querySelectorAll('#pc .grp').forEach(det=>{let done=false;det.addEventListener('toggle',async()=>{if(!det.open||done)return;done=true;const box=det.querySelector('.gb');
+  try{const all=(await loadProps(d.id)).filter(p=>p[3]===det.dataset.g);
+    if(!all.length){box.innerHTML='<p class="sm">Nenhuma proposta neste grupo.</p>';return}
+    const keyOf=p=>p[3]==='L'?'e'+p[5]:'s'+p[4];const nameOf=k=>k[0]==='e'?ST[k.slice(1)]:SUBS[+k.slice(1)];
+    const cnt={};all.forEach(p=>{const k=keyOf(p);cnt[k]=(cnt[k]||0)+1});const keys=Object.keys(cnt).sort((a,b)=>a[0]==='e'?a.localeCompare(b):cnt[b]-cnt[a]);
+    let f='',lim=40;
+    const draw=()=>{const list=f?all.filter(p=>keyOf(p)===f):all;
+      box.innerHTML=(keys.length>1?`<div class="subs">${['',...keys].map(k=>`<button class="chip" data-k="${k}" aria-pressed="${k===f}">${k?nameOf(k)+' ('+fmt(cnt[k])+')':'Todas ('+fmt(all.length)+')'}</button>`).join('')}</div>`:'')+
+      list.slice(0,lim).map(propItem).join('')+(list.length>lim?`<button class="btn" data-more="1">Mostrar mais (${fmt(list.length-lim)} restantes)</button>`:'');
+      box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{f=b.dataset.k;lim=40;draw()});const mb=box.querySelector('[data-more]');if(mb)mb.onclick=()=>{lim+=80;draw()}};
+    draw()}catch(e){box.innerHTML='<p class="sm">Não foi possível carregar agora. Tente de novo em instantes.</p>';done=false}})})}
+
+// ===== busca por estado ou assunto
+const UFN={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
+const UFBY=Object.fromEntries(Object.entries(UFN).map(([k,v])=>[norm(v),k]));
+const GL={L:'Proposta de lei',M:'Pedido de melhoria',P:'Pergunta ou cobrança',H:'Homenagem'};
+let CORP=null,NOMES=null;
+async function corpus(){if(CORP)return CORP;const fs=['b2026','b2025','b2024','b2023','nomes'];const js=await Promise.all(fs.map(f=>fetch('busca/'+f+'.json').then(r=>{if(!r.ok)throw 0;return r.json()})));NOMES=js.pop();CORP=js.flat();CORP.forEach(p=>p.t=norm(p[6]+' '+p[7]));return CORP}
+const nmA=id=>{const n=NOMES&&NOMES[id];return n?`${n[0]} (${n[1]}-${n[2]})`:'Senador(a) que não está mais no mandato'};
+function whoHTML(au){if(!au.length)return '';const first=nmA(au[0]);if(au.length===1)return `<div class="who">Por: ${esc(first)}</div>`;
+  return `<div class="who">Por: ${esc(first)} e mais ${au.length-1} <button type="button" data-all="${au.join(',')}">ver todos</button></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-all]');if(!b)return;b.parentElement.innerHTML='Por: '+b.dataset.all.split(',').map(i=>esc(nmA(+i))).join(', ')});
+const ST2={1:'Virou lei',2:'Aprovada no Senado',3:'Pronta para votação',4:'Em análise',5:'Arquivada ou retirada'};
+function sItem(p){const [id,lab,dt,g,si,et,em,kw,uf,au]=p;
+  return `<div class="pi"><div class="h">${A(MAT(id),esc(lab))}<span>${dt.split('-').reverse().join('/')}</span><span class="gtag">${GL[g]}</span>${g==='L'?`<span class="st st${et}">${ST2[et]}</span>`:''}</div><p>${esc(em)}</p>${whoHTML(au)}</div>`}
+let SQ={res:[],g:'',lim:40,label:''};
+function drawS(){const box=document.getElementById('sres');const r=SQ.g?SQ.res.filter(p=>p[3]===SQ.g):SQ.res;
+  const c={};SQ.res.forEach(p=>c[p[3]]=(c[p[3]]||0)+1);
+  const aut=new Set();SQ.res.forEach(p=>p[9].forEach(a=>aut.add(a)));
+  box.innerHTML=`<p class="cnt"><b>${fmt(SQ.res.length)}</b> propostas sobre <b>${esc(SQ.label)}</b>, assinadas por ${fmt(aut.size)} senadores atuais.</p>`+
+  (SQ.res.length?`<div class="subs">${['','L','M','P','H'].filter(k=>!k||c[k]).map(k=>`<button class="chip" data-sg="${k}" aria-pressed="${k===SQ.g}">${k?GL[k]+' ('+fmt(c[k])+')':'Todas'}</button>`).join('')}</div>`:'<p class="sm">Nada encontrado. Tente outra palavra, sem acento ou mais curta.</p>')+
+  r.slice(0,SQ.lim).map(sItem).join('')+(r.length>SQ.lim?`<button class="btn" id="smore">Mostrar mais (${fmt(r.length-SQ.lim)} restantes)</button>`:'');
+  box.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{SQ.g=b.dataset.sg;SQ.lim=40;drawS()});
+  const mb=document.getElementById('smore');if(mb)mb.onclick=()=>{SQ.lim+=80;drawS()}}
+async function runSearch(qs){qs=qs.trim();if(!qs)return;const box=document.getElementById('sres');box.innerHTML='<p class="cnt">Carregando os dados do Senado…</p>';
+  try{await corpus()}catch(e){box.innerHTML='<p class="sm">Não foi possível carregar agora. Tente de novo em instantes.</p>';return}
+  const n=norm(qs);let uf=null;if(/^[a-z]{2}$/.test(n)&&UFN[n.toUpperCase()])uf=n.toUpperCase();else if(UFBY[n])uf=UFBY[n];
+  if(uf){SQ.res=CORP.filter(p=>p[8].split(',').includes(uf));SQ.label=UFN[uf]}
+  else{const ws=n.split(/\s+/).filter(Boolean);SQ.res=CORP.filter(p=>ws.every(w=>p.t.includes(w)));SQ.label=qs}
+  SQ.g='';SQ.lim=40;drawS()}
+document.getElementById('sform').addEventListener('submit',e=>{e.preventDefault();runSearch(document.getElementById('sq').value)});
+document.getElementById('sex').innerHTML=['Bahia','Amazonas','São Paulo','creche','autismo','BR-116','enchentes','segurança pública'].map(w=>`<button class="chip" type="button" data-ex="${w}">${w}</button>`).join('');
+document.getElementById('sex').addEventListener('click',e=>{const b=e.target.closest('[data-ex]');if(!b)return;document.getElementById('sq').value=b.dataset.ex;runSearch(b.dataset.ex)});
+
+// ===== repetidas
+const TIPO={RQS:'Requerimento',REQ:'Requerimento',INS:'Indicação',PRS:'Projeto de Resolução',PL:'Projeto de Lei',PLP:'Projeto de Lei Complementar',PEC:'Proposta de Emenda à Constituição',PDL:'Projeto de Decreto Legislativo',PRC:'Projeto de Resolução',INC:'Indicação (sugestão ao governo)',RIC:'Pedido de informação',REQ:'Requerimento',SOR:'Sugestão de verba no Orçamento',SLD:'Sugestão para a Lei de Diretrizes Orçamentárias',PFC:'Proposta de fiscalização',SIT:'Pedido de informação ao TCU'};
+let REP=null,RM=3,RL=30,FR=null;
+function rItem(g){const [t,em,n,uf,gg,its]=g;const d0=its[0][2].split('-').reverse().join('/'),d1=its[its.length-1][2].split('-').reverse().join('/');
+  const aut=new Set(its.map(x=>x[3]));
+  const o=FR&&outOf(n,FR);return `<details class="rg${o?' o':''}"><summary><span class="big">${n}<small>vezes</small></span><b>${TIPO[t]||t} ${o?FP:''}</b><span class="sm">${esc(em)}<br>${d0===d1?'Tudo em '+d0:'De '+d0+' a '+d1} · ${aut.size===1?'1 autor principal':aut.size+' autores principais diferentes'}</span></summary><div class="gb">`+
+  its.map(([id,lab,dt,a1,na,sit])=>`<div class="pi"><div class="h">${A(MAT(id),esc(lab))}<span>${dt.split('-').reverse().join('/')}</span>${sit?`<span class="st">${esc(sit)}</span>`:''}</div><div class="who">Por: ${esc(nmA(a1))}${na>1?` e mais ${na-1}`:''}</div></div>`).join('')+'</div></details>'}
+async function drawR(){const box=document.getElementById('rl');if(!REP){box.innerHTML='<p class="cnt">Carregando…</p>';try{const [r,n]=await Promise.all([fetch('busca/repetidas.json').then(r=>r.json()),NOMES?Promise.resolve(NOMES):fetch('busca/nomes.json').then(r=>r.json())]);REP=r;NOMES=n;FR=fence(REP.filter(g=>g[2]>=3).map(g=>g[2]))}catch(e){box.innerHTML='<p class="sm">Não foi possível carregar agora.</p>';return}}
+  const q=norm(document.getElementById('rq').value.trim());let uf=null;if(/^[a-z]{2}$/.test(q)&&UFN[q.toUpperCase()])uf=q.toUpperCase();else if(UFBY[q])uf=UFBY[q];
+  const l=REP.filter(g=>g[2]>=RM&&(!q||(uf?g[3].split(',').includes(uf):norm(g[1]+' '+(TIPO[g[0]]||'')).includes(q))));
+  document.getElementById('rcnt').textContent=`${fmt(l.length)} pedidos repetidos, somando ${fmt(l.reduce((s,g)=>s+g[2],0))} propostas`;
+  box.innerHTML=l.slice(0,RL).map(rItem).join('');document.getElementById('rmore').hidden=l.length<=RL}
+document.getElementById('rmin').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;RM=+b.dataset.m;RL=30;document.querySelectorAll('#rmin .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));drawR()});
+document.getElementById('rq').addEventListener('input',()=>{RL=30;drawR()});
+document.getElementById('rmore').addEventListener('click',()=>{RL+=50;drawR()});
+{const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();drawR()}});io.observe(document.getElementById('repetidas'))}
+
+// página do senador
+// ===== custódromo
+{const box=document.getElementById('gauge');
+ if(!CAM){document.getElementById('custodromo').hidden=true}else{
+ const em=new Date(CAM.em||Date.now());const ini0=new Date(CAM.ano,0,1);const fim=new Date(CAM.ano+1,0,1);
+ const rate=CAM.pago/Math.max(1,(em-ini0)/1000);const MAXV=Math.max(100,Math.ceil(rate*1.6/50)*50);const cx=200,cy=200,R=160;
+ const pt=(f,r)=>{const a=Math.PI*(1-f);return [cx+r*Math.cos(a),cy-r*Math.sin(a)]};
+ const arc=(f0,f1,r)=>{const [x0,y0]=pt(f0,r),[x1,y1]=pt(f1,r);return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`};
+ let ticks='';for(let k=0;k<=10;k++){const [a1,b1]=pt(k/10,R-30),[a2,b2]=pt(k/10,R-(k%5?40:48));ticks+=`<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" stroke="#8f9cbb" stroke-width="${k%5?2:3}" stroke-linecap="round"/>`;if(k%5===0){const [tx,ty]=pt(k/10,R-70);ticks+=`<text x="${tx}" y="${ty+5}" text-anchor="middle" fill="#a9b5cf" font-size="14" font-weight="700" font-family="Bricolage Grotesque,sans-serif">${Math.round(MAXV*k/10)}</text>`}}
+ box.innerHTML=`<svg viewBox="0 0 400 218" role="img" aria-label="Velocímetro do gasto do Senado em reais por segundo"><path d="${arc(0,1,R)}" stroke="#1d3a6e" stroke-width="26" fill="none" stroke-linecap="round"/><path id="garc" stroke="#DDA544" stroke-width="26" fill="none" stroke-linecap="round"/>${ticks}<g id="gneedle"><line x1="200" y1="200" x2="200" y2="62" stroke="#F4F1EA" stroke-width="5" stroke-linecap="round"/></g><circle cx="200" cy="200" r="13" fill="#F4F1EA"/><circle cx="200" cy="200" r="5" fill="#061531"/></svg><div class="read"><b class="live" id="camlive"></b><span id="camsub"></span></div>`;
+ const live=document.getElementById('camlive'),garc=document.getElementById('garc'),nd=document.getElementById('gneedle');
+ const fmtR=v=>Math.floor(v).toLocaleString('pt-BR');const f=Math.min(1,rate/MAXV);
+ garc.setAttribute('d',arc(0,Math.max(.002,f),R));nd.style.transition='transform 1.6s cubic-bezier(.2,1.4,.4,1)';nd.setAttribute('transform','rotate(-90 200 200)');requestAnimationFrame(()=>requestAnimationFrame(()=>nd.setAttribute('transform',`rotate(${(-90+180*f).toFixed(2)} 200 200)`)));
+ function tick(){const now=Date.now();let v=CAM.pago+rate*Math.max(0,(now-em)/1000);if(now>=fim)v=CAM.pago;
+   live.innerHTML='<small>R$</small>'+fmtR(v);document.getElementById('camsub').textContent=`pagos pelo Senado em ${CAM.ano}, a ${brl(rate).replace(/,\d\d$/,'')} por segundo`}
+ tick();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(tick,100);else setInterval(tick,5000);
+ const dia=rate*86400;document.getElementById('speed').innerHTML=`<div><b>${brl(rate).replace(/,\d\d$/,'')}</b><span>por segundo</span></div><div><b>${brlc(dia)}</b><span>por dia</span></div><div><b>${brlc(dia/81)}</b><span>por dia, dividido pelos 81 senadores</span></div>`;
+ document.getElementById('camnota').innerHTML=`Valor oficial: ${A('https://www6g.senado.leg.br/transparencia/orcfin/execucao-orcamentaria/pesquisa-execucao-orcamentaria',brlc(CAM.pago)+' pagos em '+CAM.ano)} (despesas pagas mais restos a pagar pagos)${CAM.carga?', dados do SIAFI carregados pelo Senado em '+CAM.carga:''}, lido em __DATA__. O contador avança no ritmo médio do ano (estimativa) até a próxima leitura. <a href="#nota">Como funciona</a>`}}
+
+// ===== emendas por setor (todos)
+const STIP=k=>/^Transfer/.test(SET[k]);
+function bars(vals,tot){const o=vals.map((v,k)=>[k,v]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);const mx=o.length?o[0][1]:1;
+  return o.map(([k,v])=>`<div class="r"><b>${SET[k]}</b><span>${brlc(v)}</span><i class="${STIP(k)?'tr':''}" style="width:${(100*v/mx).toFixed(1)}%"></i><em>${n1(100*v/tot)}% do total</em></div>`).join('')}
+{const tot=SETT.reduce((a,b)=>a+b,0);document.getElementById('settot').innerHTML=`<b>${brl(tot)}</b> pagos em emendas indicadas pelos ${fmt(EMD.filter(r=>r[3]>0).length)} senadores atuais que tiveram emendas pagas (Orçamentos de 2024 a 2026).`;document.getElementById('setbars').innerHTML=bars(SETT,tot)}
+
+// ===== comparar
+const lbl=d=>`${d.n} (${N(d.p)}-${d.uf})`;const byLbl=new Map(L.map(d=>[norm(lbl(d)),d]));
+document.getElementById('dnames').innerHTML=[...L].sort((a,b)=>a.n.localeCompare(b.n,'pt')).map(d=>`<option value="${esc(lbl(d))}">`).join('');
+const findDep=s=>{s=norm(s.trim());if(!s)return null;return byLbl.get(s)||L.find(d=>norm(d.n)===s)||L.find(d=>norm(d.n).startsWith(s))||L.find(d=>norm(d.n).includes(s))};
+const CRIT=[['Presença nas votações',2,6,v=>n1(v)+'%',true,(a,b,va,vb)=>`${a} esteve presente em ${n1(va)}% das votações nominais; ${b}, em ${n1(vb)}%.`],
+ ['Participação nas votações',3,7,v=>n1(v)+'%',true,(a,b,va,vb)=>`${a} votou em ${n1(va)}% das votações nominais do plenário; ${b}, em ${n1(vb)}%.`],
+ ['Leis que avançaram',4,8,v=>fmt(v),true,(a,b,va,vb)=>`${a} é autor principal de ${fmt(va)} ${va===1?'projeto que virou lei ou foi aprovado':'projetos que viraram lei ou foram aprovados'} no Senado; ${b}, de ${fmt(vb)}.`],
+ ['Custo por mês',5,9,v=>brlc(v),false,(a,b,va,vb)=>`${a} gastou em média ${brlc(va)} por mês de cota parlamentar e outros gastos do gabinete; ${b}, ${brlc(vb)}.`]];
+function comparar(da,db){const box=document.getElementById('cres');
+  if(!da||!db){box.innerHTML='<p class="sm">Não achei um dos nomes. Comece a digitar e escolha na lista.</p>';return}
+  if(da===db){box.innerHTML='<p class="sm">Escolha dois senadores diferentes.</p>';return}
+  const na=da.nt[1],nb=db.nt[1];const wa=na!=null&&(nb==null||na>nb),wb=nb!=null&&(na==null||nb>na);
+  const side=(d,w)=>`<div class="side${w?' win':''}">${w?'<span class="crown">Melhor performance</span>':''}<div class="av" aria-hidden="true">${ini(d.n)}</div><a href="#d-${d.id}">${esc(d.n)}</a><span class="sm">${N(d.p)}-${d.uf}</span><div class="nt">${n1(d.nt[1])}<small> /10</small></div><span class="sm">${d.pos?d.pos+'º de '+RANK.length:'sem nota'}</span></div>`;
+  const ganhou={a:[],b:[]};
+  const rows=CRIT.map(([t,si,ri,f,mm,why])=>{const va=da.nt[ri],vb=db.nt[ri];let w='';
+    if(va!=null&&vb!=null&&va!==vb){w=(mm?va>vb:va<vb)?'a':'b';ganhou[w].push(t.toLowerCase())}
+    const cell=(v,s,me)=>`<div class="${w===me?'w':''}">${v==null?'–':f(v)}<small>nota ${n1(s)} neste critério</small></div>`;
+    return `<div class="crit"><h3>${t}</h3><div class="two">${cell(va,da.nt[si],'a')}${cell(vb,db.nt[si],'b')}</div><p>${va==null||vb==null?'Um dos dois ficou sem nota neste critério por ter pouco tempo de mandato.':why(da.n,db.n,va,vb)}</p></div>`}).join('');
+  const info=(t,fa,fb)=>`<div class="crit"><h3>${t}</h3><div class="two"><div>${fa}</div><div>${fb}</div></div></div>`;
+  const W=wa?da:wb?db:null,Lz=wa?db:da;const gW=wa?ganhou.a:ganhou.b,gL=wa?ganhou.b:ganhou.a;
+  const lista=a=>a.length>1?a.slice(0,-1).join(', ')+' e '+a[a.length-1]:a[0]||'';
+  const ver=W?`<b>${esc(W.n)} tem a melhor performance</b> pela regra do site: nota ${n1(W.nt[1])} contra ${n1(Lz.nt[1])}.${gW.length?' Vai melhor em '+lista(gW)+'.':''}${gL.length?' '+esc(Lz.n)+' vai melhor em '+lista(gL)+'.':''}`:`<b>Empate</b> na nota (${n1(na)}).`;
+  box.innerHTML=`<div class="vs2">${side(da,wa)}${side(db,wb)}</div><div class="verdict">${ver} <a href="#nota">Como a nota é calculada</a></div>${rows}
+  ${info('Custo do mandato até hoje',brlc(da.cu[1]),brlc(db.cu[1]))}${info('Emendas pagas',brlc(da.em[3]),brlc(db.em[3]))}${info('Propostas apresentadas (2023 a 2026)',fmt(da.rs.slice(1,6).reduce((x,y)=>x+y,0)),fmt(db.rs.slice(1,6).reduce((x,y)=>x+y,0)))}${info('Votou com o próprio partido',da.fi==null?'–':f1(da.fi),db.fi==null?'–':f1(db.fi))}
+  <p class="sm" style="margin-top:12px">Link desta comparação: <a href="#c-${da.id}-${db.id}">copie o endereço da página</a>.</p>`}
+document.getElementById('cform').addEventListener('submit',e=>{e.preventDefault();const a=findDep(document.getElementById('ca').value),b=findDep(document.getElementById('cb').value);if(a&&b&&a!==b)history.replaceState(null,'','#c-'+a.id+'-'+b.id);comparar(a,b)});
+
+const lab={S:'Sim',N:'Não',O:'Obstrução',A:'Abstenção',P:'Presidia',['-']:'Não votou'};const pesM=new Map(PES.map(r=>[r[0],r]));
+function depPage(d){
+  const ys=d.y,y25=ys[2];
+  const ostat=(cls,val,lab)=>`<div class="stat${cls?' o':''}"><b>${val}</b><span>${lab}${cls?'<br>'+FP:''}</span></div>`;
+  const vy=VYM.get(d.id)||[0,0,0,0,0];
+  const cu=d.cu||[d.id,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],em=d.em||[d.id,0,0,0,0,SET.map(()=>0)],nt=d.nt||[d.id,null,null,null,null,null,null,null,null,null];
+  const money=`<div class="money"><div><b>${brlc(cu[1])}</b><span>custou aos cofres públicos de 2023 até hoje <a href="#custo">ver a conta</a></span></div><div><b>${brlc(em[3])}</b><span>${em[6]?'em emendas: nenhuma encontrada no Portal da Transparência':'em emendas já pagas'} <a href="#emd">ver para onde foram</a></span></div></div>`;
+  const stats=`<div class="stats">${ostat(y25.op,y25.pct==null?'–':Math.round(y25.pct)+'%','presença nas votações de 2025')}${ostat(y25.ov,y25.vpct==null?'–':Math.round(y25.vpct)+'%','das votações de 2025 em que votou')}${ostat(false,n1(nt[1]),'nota de 0 a 10'+(d.pos?', '+d.pos+'º de '+RANK.length:''))}</div>`;
+  const cr=(t,s,v)=>`<div class="crow"><span>${t}</span><b>${s==null?'–':n1(s)}</b><div class="bar"><i style="width:${s==null?0:s*10}%"></i></div><span class="sm">${v}</span></div>`;
+  const notaCard=`<div class="card" id="ntc"><h2>Nota ${n1(nt[1])}</h2><p class="why">${d.pos?`${d.pos}º lugar entre ${RANK.length} senadores com nota. `:''}Média de quatro critérios, cada um de 0 a 10 conforme a posição dele entre todos os senadores. <a href="#nota">Como a nota é calculada</a></p>
+   ${cr('Presença nas votações',nt[2],nt[6]==null?'Pouco tempo de mandato':n1(nt[6])+'% das votações nominais, de 2023 a 2026')}${cr('Participação nas votações',nt[3],nt[7]==null?'Pouco tempo de mandato':n1(nt[7])+'% das votações nominais do plenário')}${cr('Leis que avançaram',nt[4],fmt(nt[8]||0)+' como autor principal (viraram lei ou foram aprovadas no Senado)')}${cr('Custo por mês (menos é melhor)',nt[5],nt[9]==null?'Pouco tempo de mandato':brlc(nt[9])+' por mês de cota e outros gastos do gabinete'+(d.ocm?' '+FP:''))}
+   <p style="margin-top:12px"><a href="#c-${d.id}-${(RANK[0]&&RANK[0].id!==d.id?RANK[0]:RANK[1]).id}">Comparar com outro senador</a></p></div>`;
+  const pe=pesM.get(d.id)||[d.id,0,0,'',''];const cy=Y.map((y,k)=>{const b=2+4*k,tt=cu[b]+cu[b+1]+cu[b+2];return `<tr><td>${A('https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/'+d.id+'/recursos-utilizados?ano='+y,y)}</td><td>${brlc(cu[b+2])}<br><span class="sm">${cu[b+3]} meses</span></td><td>${brlc(cu[b])}</td><td>${brlc(cu[b+1])}</td><td><b>${brlc(tt)}</b></td></tr>`}).join('');
+  const custoCard=`<div class="card" id="custo"><h2>Quanto custou: ${brl(cu[1])}</h2><p class="why">Salário, cota parlamentar (CEAPS) e outros gastos do gabinete publicados pelo Senado, de fevereiro de 2023 até hoje. Toque no ano para ver os dados oficiais do Senado.${d.ocm?' '+FP+' no custo por mês.':''}</p>
+   <div class="scroll"><table><thead><tr><th>Ano</th><th>Salário</th><th>Cota parlamentar</th><th>Outros gastos</th><th>Total</th></tr></thead><tbody>${cy}</tbody></table></div>
+   <p class="sm" style="margin-top:10px">${pe[1]||pe[2]?`Trabalham com ele ${fmt(pe[1])} pessoas no gabinete em Brasília e ${fmt(pe[2])} nos escritórios de apoio no estado; o Senado não publica quanto isso custa por senador, então os salários dessa equipe não entram na conta. `:''}${pe[4]?`Imóvel funcional: ${esc(pe[4].toLowerCase())}. `:''}${pe[3]?`Auxílio-moradia: ${esc(pe[3].toLowerCase())}. `:''}Também não entram plano de saúde, previdência e 13º. <a href="#nota">Como calculamos</a></p></div>`;
+  const emdCard=`<div class="card" id="emd"><h2>Emendas pagas: ${brl(em[3])}</h2><p class="why">Dinheiro do Orçamento indicado por ele que já foi pago (inclusive restos a pagar), nas emendas individuais dos Orçamentos de 2024 a 2026. Para comparar: ${brlc(em[2])} foram empenhados (reservados) e ${brlc(em[1])} liquidados, mas só conta como entregue o que foi pago.</p>
+   ${em[6]?`<p class="warn" style="display:block">Não encontramos emendas individuais com o nome deste senador no arquivo do Portal da Transparência nos Orçamentos de 2024 a 2026. Pode ser um suplente que assumiu há pouco tempo ou um nome registrado de outro jeito no sistema do governo.</p>`:em[3]>0?`<h3>Para qual setor foi</h3><div class="hb">${bars(em[5],em[3])}</div>`:'<p>Nenhuma emenda paga encontrada para este senador de 2024 a 2026.</p>'}
+   ${em[4]?`<details class="grp" id="emlist"><summary><b>Ver as ${fmt(em[4])} emendas, uma por uma</b><span class="n">${fmt(em[4])}</span><span class="d">Setor, ação, local e valores empenhado, liquidado e pago</span></summary><div class="gb">Carregando…</div></details>`:''}
+   <p class="sm" style="margin-top:10px">Fonte: ${A('https://portaldatransparencia.gov.br/emendas','emendas parlamentares no Portal da Transparência')} (Controladoria-Geral da União).</p></div>`;
+  const outs=[];ys.forEach(y=>{if(y.op)outs.push(`presença ${y.op} do comum em ${y.ano} (${Math.round(y.pct)}%)`);if(y.ov)outs.push(`votou em menos ou mais votações que o comum em ${y.ano} (${Math.round(y.vpct)}%)`)});
+  const nmK={fi:'com o próprio partido',pt:'com a maioria do PT',pl:'com a maioria do PL',gv:'com a orientação do Governo'};
+  for(const k in nmK)if(d.o[k])outs.push(`votou ${nmK[k]} ${d.o[k]==='abaixo'?'bem menos':'bem mais'} que os colegas do ${N(d.p)} (${f1(d[k])})`);
+  ['Propostas de lei','Pedidos de melhoria','Perguntas e cobranças','Homenagens','Outros'].forEach((g,i)=>{if(d.og[i])outs.push(`${g}: ${fmt(d.rs[i+1])}, ${d.og[i]} do comum entre os senadores`)});
+  const n21=d.ov21.filter(Boolean).length;if(n21)outs.push(`votou diferente da maioria do ${N(d.p)} em ${n21} das ${VOT.length} votações que dividiram o plenário`);
+  const presY=ys.map(y=>{const t=y.p+y.aj+y.an;if(!t)return `<div class="yr"><div class="ln"><b>${y.ano}</b><span class="sm">Não estava no mandato nas votações deste ano</span></div></div>`;
+    const dots='<i></i>'.repeat(y.p)+'<i class="j"></i>'.repeat(y.aj)+'<i class="n"></i>'.repeat(y.an);
+    return `<div class="yr"><div class="ln"><b>${y.ano}${y.ano===2026?' <span class="sm">(até agora)</span>':''} ${y.op?FP:''}</b><span>${A(presURL(d.id,y.ano),y.p)} presente, ${A(presURL(d.id,y.ano),y.aj)} justificada, ${A(presURL(d.id,y.ano),y.an)} sem justificativa</span></div><div class="dots" aria-hidden="true">${dots}</div></div>`}).join('');
+  const votRows=ys.map((y,k)=>`<tr><td>${y.ano}</td><td>${A(votURL(d.id,y.ano),fmt(vy[k+1]))} <span class="sm">de ${fmt(VY.tot[k])}</span>${y.ov?' '+FP:''}</td><td>${A(propURL(d.id,y.ano),fmt(y.prop))}</td></tr>`).join('');
+  const votes=VOT.map((v,i)=>{const c=d.cod[i]||'-';const o=d.ov21[i];return `<div class="vote${o?' o':''}"><div class="vt">${esc(v[6])}${o?`<br><span class="fp">diferente da maioria do ${N(d.p)}</span>`:''}</div><span class="tag t${c}">${lab[c]}</span><div class="vm">${dt(v[1])}, ${A(MAT(v[3]),v[2])}, ${A(votURL(d.id,v[1].slice(0,4)),'ver nos dados do Senado')}</div></div>`}).join('');
+  const al=(k,t)=>{const v=d[k];if(v==null)return '';const o=d.o[k];return `<div class="ln"><span>${t} ${o?FP:''}</span>${A(SRC,f1(v))}</div><div class="bar${o?' o':''}"><i style="width:${v}%"></i></div>`};
+  return `<div class="dhero"><div class="w"><a class="back" href="#busca">← Todos os senadores</a>
+  <div class="fig"><div class="head"><div class="bigav" aria-hidden="true">${ini(d.n)}</div><div><h1>${esc(d.n)}</h1><div class="tagp"><span>${N(d.p)}</span><span>${UFN[d.uf]||d.uf}</span>${A(SEN(d.id),'Página oficial')}</div></div></div>${money}${stats}</div></div></div>
+  <div class="sheet depbody"><div class="w">
+  ${outs.length?`<div class="fpnote"><div><b>O que sai do padrão neste senador</b><ul>${outs.map(o=>'<li>'+esc(o)+'</li>').join('')}</ul><a href="#padrao">Como definimos "fora do padrão"</a></div></div>`:`<div class="fpnote"><div>Nenhum número deste senador sai do padrão. <a href="#padrao">Como definimos</a></div></div>`}
+  ${notaCard}${custoCard}${emdCard}
+  <div class="card"><h2>Presença nas votações</h2><p class="why">Cada bolinha é uma votação nominal do plenário. <span class="keyd"><i></i>presente</span><span class="keyd"><i class="j"></i>ausência justificada</span><span class="keyd"><i class="n"></i>ausência sem justificativa</span><br>Toque no número para ver os dados oficiais do Senado.</p>${presY}</div>
+  <div class="card"><h2>Votações e propostas</h2><p class="why">Em quantas votações nominais do plenário ele votou (Sim, Não, Abstenção ou voto secreto), de quantas houve no ano. Ao lado, todas as propostas que apresentou (projetos, requerimentos, indicações e outros pedidos).</p>
+  <div class="scroll"><table><thead><tr><th>Ano</th><th>Votou</th><th>Propostas apresentadas</th></tr></thead><tbody>${votRows}</tbody></table></div>
+  <p style="margin-top:14px">Projetos de lei, de lei complementar, de emenda à Constituição e de decreto legislativo (2023 a 2026), como autor ou coautor: <b>${fmt(d.pj)}</b></p></div>
+  <div class="card" id="pc"><h2>Propostas separadas por grupo</h2><p class="why">${fmt(d.rs.slice(1,6).reduce((a,b)=>a+b,0))} propostas de 2023 a 2026 em que ele é autor ou coautor. Toque em um grupo para ler uma por uma. <a href="#regra">Como separamos</a></p>
+  ${GR.map(([k,t,ds],i)=>`<details class="grp" data-g="${k}"><summary><b>${t}</b><span class="n">${fmt(d.rs[1+i])}${d.og[i]?'<br>'+FP:''}</span><span class="d">${ds}</span></summary><div class="gb">Carregando…</div></details>`).join('')}</div>
+  <div class="card"><h2>Como votou nas ${VOT.length} votações que dividiram o plenário</h2><p class="why">Votações nominais abertas de projetos e PECs em 2025 e 2026 em que o lado que perdeu teve pelo menos 20% dos votos. Em turquesa, quando ele votou diferente da maioria do partido atual dele.</p>${votes}</div>
+  <div class="card"><h2>Com quem votou do mesmo lado</h2><p class="why">De 2023 a 2026, nas votações nominais abertas do plenário em que ele votou Sim ou Não. Em turquesa, quando o número sai do padrão entre os colegas do ${N(d.p)}.</p>
+  ${al('fi','Com o próprio partido')}${d.p!=='PT'?al('pt','Com a maioria do PT'):''}${d.p!=='PL'?al('pl','Com a maioria do PL'):''}${al('gv','Com a orientação do Governo')}
+  <p class="sm">Registros nas votações: ${A(SRC,fmt(d.S))} Sim, ${A(SRC,fmt(d.No))} Não e ${A(SRC,fmt(d.A))} outros (abstenção, voto secreto, presença sem voto, presidência e ausências)</p></div>
+  <p style="margin-top:20px"><a class="back" href="#busca" style="color:var(--gold3)">← Todos os senadores</a></p></div></div>`}
+const home=document.getElementById('home'),dep=document.getElementById('dep');
+document.addEventListener('click',e=>{const a=e.target.closest('a[href="#custo"],a[href="#emd"],a[href="#ntc"]');if(!a||dep.hidden)return;e.preventDefault();const t=document.getElementById(a.getAttribute('href').slice(1));if(t)t.scrollIntoView({behavior:'smooth'})});
+function route(){const m=location.hash.match(/^#d-(\d+)$/);const d=m&&L.find(x=>x.id==m[1]);
+  const mc=location.hash.match(/^#c-(\d+)-(\d+)$/);
+  if(mc){const a=L.find(x=>x.id==mc[1]),b=L.find(x=>x.id==mc[2]);dep.hidden=true;home.hidden=false;if(a)document.getElementById('ca').value=lbl(a);if(b)document.getElementById('cb').value=lbl(b);comparar(a,b);document.getElementById('comparar').scrollIntoView();return}
+  if(d){dep.innerHTML=depPage(d);wireGroups(d);wireEm(d);home.hidden=true;dep.hidden=false;window.scrollTo(0,0);document.title=d.n+' · Placar do Senado'}
+  else{dep.hidden=true;home.hidden=false;document.title='Placar do Senado';if(location.hash&&!location.hash.startsWith('#d-')){const t=document.querySelector(location.hash);if(t)t.scrollIntoView()}}}
+window.addEventListener('hashchange',route);route();
+}
+</script>
+</body>
+</html>
