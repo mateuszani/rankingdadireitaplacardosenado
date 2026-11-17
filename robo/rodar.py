@@ -1,4 +1,4 @@
-"""Robô do Placar do Senado: coleta os dados oficiais, calcula, confere e monta o site.
+"""Robô do Radar NasRuas Senado: coleta os dados oficiais, calcula, confere e monta o site.
 
 Fontes (todas oficiais):
 - Dados Abertos Legislativos do Senado (legis.senado.leg.br/dadosabertos): senadores, mandatos, votações nominais,
@@ -865,7 +865,7 @@ def main():
         resumo = os.environ.get("GITHUB_STEP_SUMMARY")
         if resumo:
             with open(resumo, "a") as f:
-                f.write("## Robô do Placar do Senado\n\n")
+                f.write("## Robô do Radar NasRuas Senado\n\n")
                 f.write("**Resultado:** " + ("publicado ✅" if rel.get("ok") else "NÃO publicado: o site continua com a última versão boa ❌") + "\n\n")
                 for p in rel.get("problemas", []):
                     f.write(f"- {p}\n")

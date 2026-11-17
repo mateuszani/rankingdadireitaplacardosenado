@@ -1,4 +1,4 @@
-name: Atualizar o Placar do Senado
+name: Atualizar o Radar NasRuas Senado
 
 # Todo dia às 03:47 de Brasília (06:47 UTC) e quando alguém aperta "Run workflow".
 on:
