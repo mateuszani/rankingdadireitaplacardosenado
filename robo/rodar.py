@@ -610,7 +610,8 @@ def calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, said
             outros = float(((dd.get("gastosNaoInclusos") or {}).get("totalValor")) or 0)
             cota_ru = float(((dd.get("cotas") or {}).get("totalValor")) or 0)
             cota_lanc = round(ceaps.get((i, a), 0.0), 2)
-            if abs(cota_lanc - cota_ru) > max(100, 0.01 * max(cota_ru, cota_lanc)):
+            # no ano corrente as duas bases do Senado se atualizam em dias diferentes; a conferência vale para anos fechados
+            if a < hoje.year and abs(cota_lanc - cota_ru) > max(100, 0.01 * max(cota_ru, cota_lanc)):
                 difs.append((i, a, cota_lanc, cota_ru))
             cota = round(cota_ru, 2)
             linha += [cota, round(outros, 2), round(sal, 2), len(ms)]

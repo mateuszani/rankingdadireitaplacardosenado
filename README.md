@@ -25,7 +25,7 @@ Todo dia às 03:47 (horário de Brasília) o GitHub roda `robo/rodar.py`, que:
    - alguma votação aberta vier sem a lista de votos completa;
    - as votações principais não baterem com o placar oficial do painel;
    - houver menos de 3.000 propostas;
-   - menos de 75 senadores tiverem custo, ou a cota parlamentar não bater entre as duas fontes do Senado;
+   - menos de 75 senadores tiverem custo, ou a cota parlamentar de um ano já fechado não bater entre as duas fontes do Senado;
    - menos de 60 senadores tiverem emendas encontradas;
    - qualquer contagem cair mais de 1% em relação à última versão publicada;
 4. só se tudo passar, monta o site em `saida/` e publica no GitHub Pages.
