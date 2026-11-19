@@ -667,21 +667,24 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-all]');if(
 const ST2={1:'Virou lei',2:'Aprovada no Senado',3:'Pronta para votação',4:'Em análise',5:'Arquivada ou retirada'};
 function sItem(p){const [id,lab,dt,g,si,et,em,kw,uf,au]=p;
   return `<div class="pi"><div class="h">${A(MAT(id),esc(lab))}<span>${dt.split('-').reverse().join('/')}</span><span class="gtag">${GL[g]}</span>${g==='L'?`<span class="st st${et}">${ST2[et]}</span>`:''}</div><p>${esc(em)}</p>${whoHTML(au)}</div>`}
-let SQ={res:[],g:'',lim:40,label:''};
-function drawS(){const box=document.getElementById('sres');const r=SQ.g?SQ.res.filter(p=>p[3]===SQ.g):SQ.res;
+let SQ={res:[],g:'',lim:40,label:'',ano:'',st:'',ord:''};
+function drawS(){const box=document.getElementById('sres');let r=SQ.g?SQ.res.filter(p=>p[3]===SQ.g):SQ.res;if(SQ.ano)r=r.filter(p=>p[2].startsWith(SQ.ano));if(SQ.st)r=r.filter(p=>p[3]==='L'&&String(p[5])===SQ.st);if(SQ.ord==='old')r=[...r].reverse();
+  const anosS=[...new Set(SQ.res.map(p=>p[2].slice(0,4)))].sort().reverse();const sel=(id,v,opts)=>`<select id="${id}" style="padding:9px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.2);font:600 14px var(--fb,inherit);background:#fff">${opts.map(([k,t])=>`<option value="${k}"${k===v?' selected':''}>${t}</option>`).join('')}</select>`;
+  const filtros=SQ.res.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${sel('fano',SQ.ano,[['','Todos os anos'],...anosS.map(a=>[a,a])])}${sel('fst',SQ.st,[['','Qualquer situação'],...Object.entries(ST2)])}${sel('ford',SQ.ord,[['','Mais recentes primeiro'],['old','Mais antigas primeiro']])}</div>${SQ.ano||SQ.st?`<p class="sm">${fmt(r.length)} com estes filtros${SQ.st?' (situação vale só para propostas de lei)':''}.</p>`:''}`:'';
   const c={};SQ.res.forEach(p=>c[p[3]]=(c[p[3]]||0)+1);
   const aut=new Set();SQ.res.forEach(p=>p[9].forEach(a=>aut.add(a)));
   box.innerHTML=`<p class="cnt"><b>${fmt(SQ.res.length)}</b> propostas sobre <b>${esc(SQ.label)}</b>, assinadas por ${fmt(aut.size)} senadores atuais.</p>`+
-  (SQ.res.length?`<div class="subs">${['','L','M','P','H'].filter(k=>!k||c[k]).map(k=>`<button class="chip" data-sg="${k}" aria-pressed="${k===SQ.g}">${k?GL[k]+' ('+fmt(c[k])+')':'Todas'}</button>`).join('')}</div>`:'<p class="sm">Nada encontrado. Tente outra palavra, sem acento ou mais curta.</p>')+
+  (SQ.res.length?filtros+`<div class="subs">${['','L','M','P','H'].filter(k=>!k||c[k]).map(k=>`<button class="chip" data-sg="${k}" aria-pressed="${k===SQ.g}">${k?GL[k]+' ('+fmt(c[k])+')':'Todas'}</button>`).join('')}</div>`:'<p class="sm">Nada encontrado. Tente outra palavra, sem acento ou mais curta.</p>')+
   r.slice(0,SQ.lim).map(sItem).join('')+(r.length>SQ.lim?`<button class="btn" id="smore">Mostrar mais (${fmt(r.length-SQ.lim)} restantes)</button>`:'');
   box.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{SQ.g=b.dataset.sg;SQ.lim=40;drawS()});
+  [['fano','ano'],['fst','st'],['ford','ord']].forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.onchange=()=>{SQ[k]=e.value;if(k==='st'&&e.value)SQ.g='L';SQ.lim=40;drawS()}});
   const mb=document.getElementById('smore');if(mb)mb.onclick=()=>{SQ.lim+=80;drawS()}}
 async function runSearch(qs){qs=qs.trim();if(!qs)return;const box=document.getElementById('sres');box.innerHTML='<p class="cnt">Carregando os dados do Senado…</p>';
   try{await corpus()}catch(e){box.innerHTML='<p class="sm">Não foi possível carregar agora. Tente de novo em instantes.</p>';return}
   const n=norm(qs);let uf=null;if(/^[a-z]{2}$/.test(n)&&UFN[n.toUpperCase()])uf=n.toUpperCase();else if(UFBY[n])uf=UFBY[n];
   if(uf){SQ.res=CORP.filter(p=>p[8].split(',').includes(uf));SQ.label=UFN[uf]}
   else{const ws=n.split(/\s+/).filter(Boolean);SQ.res=CORP.filter(p=>ws.every(w=>p.t.includes(w)));SQ.label=qs}
-  SQ.g='';SQ.lim=40;drawS()}
+  SQ.g='';SQ.ano='';SQ.st='';SQ.ord='';SQ.lim=40;drawS()}
 document.getElementById('sform').addEventListener('submit',e=>{e.preventDefault();runSearch(document.getElementById('sq').value)});
 document.getElementById('sex').innerHTML=['Bahia','Amazonas','São Paulo','creche','autismo','BR-116','enchentes','segurança pública'].map(w=>`<button class="chip" type="button" data-ex="${w}">${w}</button>`).join('');
 document.getElementById('sex').addEventListener('click',e=>{const b=e.target.closest('[data-ex]');if(!b)return;document.getElementById('sq').value=b.dataset.ex;runSearch(b.dataset.ex)});
