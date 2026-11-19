@@ -382,8 +382,18 @@ def calcular_votacoes(V, O, sens):
                 c = x.get("siglaVotoParlamentar") or ""
                 a_[idx[i]] = "S" if c == "Sim" else "N" if c == "Não" else "A" if c == "Abstenção" else "P" if c.startswith("Presidente") else "-"
     COD = [[d["id"], "".join(cod.get(d["id"], ["-"] * len(sel)))] for d in sens]
+    # últimas 20 votações abertas do plenário de cada senador: [data, descrição, voto, sim, não]
+    ULT = {}
+    for i in sorted(abertas, key=lambda i: data[i], reverse=True):
+        v = by_id[i]
+        ident = (v.get("identificacao") or "").split(" (")[0]
+        desc = cortar((ident + " – " if ident else "") + (v.get("descricaoVotacao") or v.get("ementa") or ""), 300)
+        for x in VOTOS[i]:
+            sid = int(x.get("codigoParlamentar") or 0)
+            if sid in sids and len(ULT.setdefault(sid, [])) < 20:
+                ULT[sid].append([data[i][:10], desc, x.get("siglaVotoParlamentar") or "", sim_nao[i][0], sim_nao[i][1]])
     stats = {"votacoes": len(ids), "abertas": len(abertas), "por_ano": R["meta"]["porAno"], "placar": placar,
-             "votos": sum(len(VOTOS[i]) for i in ids), "gov": len(GOV), "sem_votos": [i for i in abertas if len(VOTOS[i]) < 60]}
+             "votos": sum(len(VOTOS[i]) for i in ids), "gov": len(GOV), "sem_votos": [i for i in abertas if len(VOTOS[i]) < 60], "ult": ULT}
     return R, MX, DEPS, VY, sel, COD, OFFv, stats
 
 
@@ -593,10 +603,26 @@ def setor_de(tipo, funcao):
 def calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, saida):
     # CEAPS por senador e ano (lançamentos), conferido com o total agrupado de recursos-utilizados
     ceaps = collections.defaultdict(float)
+    mensal = collections.defaultdict(lambda: [0.0] * 12)
     for a in ANOS:
         for r in (CE.get(a) or []):
             if (r.get("tipoDespesa") or "").strip():  # lançamentos sem tipo não entram no total oficial agrupado
                 ceaps[(int(r.get("codSenador") or 0), a)] += float(r.get("valorReembolsado") or 0)
+                try:
+                    m = int(r.get("mes") or 0)
+                except (TypeError, ValueError):
+                    m = 0
+                if 1 <= m <= 12:
+                    mensal[(int(r.get("codSenador") or 0), a)][m - 1] += float(r.get("valorReembolsado") or 0)
+    # gasto mês a mês de cada senador (cota parlamentar): {id: [[ano, [cota x12], [zeros x12]], ...]}
+    gsh = collections.defaultdict(dict)
+    for d in sens:
+        lin = [[a, [round(x, 2) for x in mensal[(d["id"], a)]], [0] * 12] for a in ANOS if sum(mensal.get((d["id"], a), [0]))]
+        if lin:
+            gsh[d["id"] % 64][d["id"]] = lin
+    os.makedirs(os.path.join(saida, "g"), exist_ok=True)
+    for k in range(64):
+        json.dump(gsh.get(k, {}), open(os.path.join(saida, "g", f"{k}.json"), "w"), ensure_ascii=False, separators=(",", ":"))
     CU, difs = [], []
     for d in sens:
         i = d["id"]
@@ -812,6 +838,10 @@ def main():
                   "recursos usados": [k for k, v in RU.items() if v is None]}
         R, MX, DEPS, VY, VOT, COD, OFFv, sv = calcular_votacoes(V, O, sens)
         log(f"  {sv['votacoes']} votações nominais ({sv['abertas']} abertas), {len(VOT)} principais divididas, Governo em {sv['gov']}")
+        os.makedirs(os.path.join(saida, "u"), exist_ok=True)
+        for k in range(64):
+            json.dump({i: v for i, v in sv["ult"].items() if i % 64 == k}, open(os.path.join(saida, "u", f"{k}.json"), "w"),
+                      ensure_ascii=False, separators=(",", ":"))
         RES, PP, porano, sp = calcular_propostas(PR, sens, saida)
         log(f"  {sp['propostas']:,} propostas")
         CU, EMD, NOTA, SETS, SETT, PES, sc = calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, saida)

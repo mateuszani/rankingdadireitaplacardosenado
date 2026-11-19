@@ -340,6 +340,7 @@ footer b{color:var(--gold)}
 [hidden]{display:none!important}
 @media(max-width:600px){table{font-size:15px}th,td{padding:9px 4px}}
 @media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+#mesc[hidden],#ultv[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -814,7 +815,7 @@ function depPage(d){
   <div class="fig"><div class="head"><div class="bigav" aria-hidden="true">${ini(d.n)}</div><div><h1>${esc(d.n)}</h1><div class="tagp"><span>${N(d.p)}</span><span>${UFN[d.uf]||d.uf}</span>${A(SEN(d.id),'Página oficial')}</div></div></div>${money}${stats}</div></div></div>
   <div class="sheet depbody"><div class="w">
   ${outs.length?`<div class="fpnote"><div><b>O que sai do padrão neste senador</b><ul>${outs.map(o=>'<li>'+esc(o)+'</li>').join('')}</ul><a href="#padrao">Como definimos "fora do padrão"</a></div></div>`:`<div class="fpnote"><div>Nenhum número deste senador sai do padrão. <a href="#padrao">Como definimos</a></div></div>`}
-  ${notaCard}${custoCard}${emdCard}
+  ${notaCard}${custoCard}<div class="card" id="mesc" hidden></div>${emdCard}<div class="card" id="ultv" hidden></div>
   <div class="card"><h2>Presença nas votações</h2><p class="why">Cada bolinha é uma votação nominal do plenário. <span class="keyd"><i></i>presente</span><span class="keyd"><i class="j"></i>ausência justificada</span><span class="keyd"><i class="n"></i>ausência sem justificativa</span><br>Toque no número para ver os dados oficiais do Senado.</p>${presY}</div>
   <div class="card"><h2>Votações e propostas</h2><p class="why">Em quantas votações nominais do plenário ele votou (Sim, Não, Abstenção ou voto secreto), de quantas houve no ano. Ao lado, todas as propostas que apresentou (projetos, requerimentos, indicações e outros pedidos).</p>
   <div class="scroll"><table><thead><tr><th>Ano</th><th>Votou</th><th>Propostas apresentadas</th></tr></thead><tbody>${votRows}</tbody></table></div>
@@ -831,12 +832,32 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href="#custo"]
 function route(){const m=location.hash.match(/^#d-(\d+)$/);const d=m&&L.find(x=>x.id==m[1]);
   const mc=location.hash.match(/^#c-(\d+)-(\d+)$/);
   if(mc){const a=L.find(x=>x.id==mc[1]),b=L.find(x=>x.id==mc[2]);dep.hidden=true;home.hidden=false;if(a)document.getElementById('ca').value=lbl(a);if(b)document.getElementById('cb').value=lbl(b);comparar(a,b);document.getElementById('comparar').scrollIntoView();return}
-  if(d){dep.innerHTML=depPage(d);wireGroups(d);wireEm(d);home.hidden=true;dep.hidden=false;window.scrollTo(0,0);document.title=d.n+' · Radar NasRuas Senado'}
+  if(d){dep.innerHTML=depPage(d);wireGroups(d);wireEm(d);wireExtra(d);home.hidden=true;dep.hidden=false;window.scrollTo(0,0);document.title=d.n+' · Radar NasRuas Senado'}
   else{dep.hidden=true;home.hidden=false;document.title='Radar NasRuas Senado';if(location.hash&&!location.hash.startsWith('#d-')){const t=document.querySelector(location.hash);if(t)t.scrollIntoView()}}}
 // ===== custômetro: equivalências (valores oficiais de 2026)
 try{if(CAM&&CAM.pago){const v=CAM.pago,SM=1621,MER=0.57,PNAE=6.7e9;const mi=x=>x>=1e6?(x/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' milhões':Math.round(x).toLocaleString('pt-BR');
  document.getElementById('equiv').innerHTML=`<div><b>${mi(v/SM)}</b><span>salários mínimos de R$ 1.621</span></div><div><b>${mi(v/(MER*200))}</b><span>alunos com merenda federal o ano letivo inteiro</span></div><div><b>${n1(100*v/PNAE)}%</b><span>de toda a verba federal da merenda escolar de 2026</span></div>`;
  document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pelo Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026).'}}catch(e){}
+// ===== ficha: gasto mês a mês e últimas votações (arquivos g/ e u/)
+async function wireExtra(d){const k=d.id%64;
+ const get=async(dir)=>{try{const r=await fetch(dir+'/'+k+'.json');if(!r.ok)return null;const j=await r.json();return j[d.id]||null}catch(e){return null}};
+ const [g,u]=await Promise.all([get('g'),get('u')]);
+ const mb=document.getElementById('mesc'),ub=document.getElementById('ultv');if(!mb||!ub)return;
+ const MS=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+ if(g&&g.length){const anos=g.map(x=>x[0]).sort((a,b)=>b-a);
+  const draw=a=>{const r=g.find(x=>x[0]===a);const c=r[1],gb=r[2];const t=c.map((v,i)=>v+gb[i]);const mx=Math.max(1,...t);const tot=t.reduce((x,y)=>x+y,0);
+   mb.querySelector('.mbars').innerHTML=t.map((v,i)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0" title="${MS[i]}: ${brl(c[i])}"><span style="font-size:11px;font-weight:700;white-space:nowrap">${v?brlc(v).replace('R$ ',''):''}</span><div style="width:100%;max-width:34px;height:150px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.05)"><i style="display:block;height:${(100*gb[i]/mx).toFixed(1)}%;background:#9fd3ff"></i><i style="display:block;height:${(100*c[i]/mx).toFixed(1)}%;background:#009639"></i></div><span style="font-size:12px">${MS[i]}</span></div>`).join('');
+   mb.querySelector('.mtot').innerHTML=`Cota parlamentar em ${a}: <b>${brl(tot)}</b>`;
+   mb.querySelectorAll('[data-ma]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.ma===a)))};
+  mb.innerHTML=`<h2>Gasto mês a mês</h2><p class="why">Cota parlamentar (CEAPS: passagens, hospedagem, combustível, escritório, divulgação etc.), mês a mês, somando os reembolsos publicados pelo Senado. Salário, pessoal do gabinete e benefícios não entram aqui.</p>
+   <div class="chips" style="margin:10px 0">${anos.map(a=>`<button class="chip" type="button" data-ma="${a}">${a}</button>`).join('')}</div>
+   <div class="mbars" style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end"></div>
+   <p class="sm" style="margin-top:10px"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#009639"></span> cota parlamentar</p><p class="mtot" style="margin-top:6px"></p>`;
+  mb.querySelectorAll('[data-ma]').forEach(b=>b.onclick=()=>draw(+b.dataset.ma));draw(anos[0]);mb.hidden=false}
+ if(u&&u.length){const cor={'Sim':['#009639','#fff'],'Não':['#d93636','#fff'],'Obstrução':['#ff9a3c','#071C12'],'Abstenção':['#9fd3ff','#071C12']};
+  const dtf=s=>s.split('-').reverse().join('/');
+  ub.innerHTML=`<h2>Últimas votações no plenário</h2><p class="why">As ${u.length} votações abertas mais recentes do plenário com registro dele, com o resultado. Inclui requerimentos, emendas e destaques, além dos projetos. Votações secretas não aparecem.</p>
+   <div style="display:grid;gap:8px;margin-top:10px">${u.map(v=>{const c=cor[v[2]]||['#e5e1d6','#071C12'];const tt=v[3]+v[4];return `<div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.035)"><div><span class="sm">${dtf(v[0])}</span><div style="font-size:14px;line-height:1.35">${esc(v[1]||'Votação nominal')}</div>${tt?`<span class="sm">Plenário: ${fmt(v[3])} Sim × ${fmt(v[4])} Não</span>`:''}</div><span style="background:${c[0]};color:${c[1]};font-weight:800;border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap">${esc(v[2])}</span></div>`}).join('')}</div>`;ub.hidden=false}}
 window.addEventListener('hashchange',route);route();
 }
 </script>
