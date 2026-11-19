@@ -748,7 +748,32 @@ function comparar(da,db){const box=document.getElementById('cres');
   const ver=W?`<b>${esc(W.n)} tem a melhor performance</b> pela regra do site: nota ${n1(W.nt[1])} contra ${n1(Lz.nt[1])}.${gW.length?' Vai melhor em '+lista(gW)+'.':''}${gL.length?' '+esc(Lz.n)+' vai melhor em '+lista(gL)+'.':''}`:`<b>Empate</b> na nota (${n1(na)}).`;
   box.innerHTML=`<div class="vs2">${side(da,wa)}${side(db,wb)}</div><div class="verdict">${ver} <a href="#nota">Como a nota é calculada</a></div>${rows}
   ${info('Custo do mandato até hoje',brlc(da.cu[1]),brlc(db.cu[1]))}${info('Emendas pagas',brlc(da.em[3]),brlc(db.em[3]))}${info('Propostas apresentadas (2023 a 2026)',fmt(da.rs.slice(1,6).reduce((x,y)=>x+y,0)),fmt(db.rs.slice(1,6).reduce((x,y)=>x+y,0)))}${info('Votou com o próprio partido',da.fi==null?'–':f1(da.fi),db.fi==null?'–':f1(db.fi))}
-  <p class="sm" style="margin-top:12px">Link desta comparação: <a href="#c-${da.id}-${db.id}">copie o endereço da página</a>.</p>`}
+  <p style="margin-top:14px"><button type="button" class="btn" id="cjpg" style="background:#FFDD00;color:#071C12;border:0;border-radius:999px;padding:12px 22px;font-weight:800;cursor:pointer">Baixar imagem da comparação (JPEG)</button></p>
+  <p class="sm" style="margin-top:12px">Link desta comparação: <a href="#c-${da.id}-${db.id}">copie o endereço da página</a>.</p>`;
+  document.getElementById('cjpg').onclick=()=>cmpJPG(da,db,wa,wb)}
+async function cmpJPG(da,db,wa,wb){try{await document.fonts.ready}catch(e){}
+  const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const F=(w,px)=>`${w} ${px}px Montserrat, Poppins, Arial, sans-serif`;
+  const grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#123A27');grd.addColorStop(1,'#071C12');g.fillStyle=grd;g.fillRect(0,0,W,H);
+  g.fillStyle='#009639';g.fillRect(0,0,W*0.7,14);g.fillStyle='#FFDD00';g.fillRect(W*0.7,0,W*0.3,14);
+  g.textAlign='center';g.fillStyle='#FFDD00';g.font=F(900,30);g.fillText('RADAR NAS RUAS · SENADO',W/2,78);
+  g.fillStyle='#fff';g.font=F(900,64);g.fillText('QUEM TRABALHA MELHOR?',W/2,158);
+  const fit=(t,max,px,w)=>{let p=px;g.font=F(w,p);while(g.measureText(t).width>max&&p>18){p-=2;g.font=F(w,p)}return p};
+  const col=(d,x,win)=>{const cw=470,y=200;g.fillStyle=win?'#009639':'rgba(255,255,255,.07)';g.beginPath();g.roundRect(x-cw/2,y,cw,360,28);g.fill();
+    if(win){g.fillStyle='#FFDD00';g.beginPath();g.roundRect(x-150,y-22,300,44,22);g.fill();g.fillStyle='#071C12';g.font=F(900,22);g.fillText('MELHOR PERFORMANCE',x,y+8)}
+    g.fillStyle='#fff';fit(d.n,cw-40,40,900);g.fillText(d.n,x,y+82);g.fillStyle='rgba(255,255,255,.75)';g.font=F(600,26);g.fillText(N(d.p)+'-'+d.uf,x,y+122);
+    g.fillStyle=win?'#FFDD00':'#fff';g.font=F(900,130);g.fillText(n1(d.nt[1]),x,y+270);g.font=F(700,26);g.fillStyle='rgba(255,255,255,.8)';g.fillText(d.pos?('nota /10 · '+d.pos+'º de '+RANK.length):'sem nota',x,y+318)};
+  col(da,W/2-250,wa);col(db,W/2+250,wb);
+  let y=640;const rows=CRIT.map(([t,si,ri,f,mm])=>[t,da.nt[ri]==null?'–':f(da.nt[ri]),db.nt[ri]==null?'–':f(db.nt[ri]),da.nt[ri],db.nt[ri],mm]);
+  rows.push(['Custo do mandato até hoje',brlc(da.cu[1]),brlc(db.cu[1]),da.cu[1],db.cu[1],false]);
+  rows.push(['Emendas pagas',brlc(da.em[3]),brlc(db.em[3]),null,null,true]);
+  for(const [t,a,b,va,vb,mm] of rows){g.fillStyle='rgba(255,255,255,.06)';g.beginPath();g.roundRect(60,y-46,W-120,92,18);g.fill();
+    g.fillStyle='rgba(255,255,255,.7)';g.font=F(700,22);g.fillText(t.toUpperCase(),W/2,y-14);
+    const wA=va!=null&&vb!=null&&va!==vb&&(mm?va>vb:va<vb),wB=va!=null&&vb!=null&&va!==vb&&!wA;
+    g.font=F(900,34);g.fillStyle=wA?'#FFDD00':'#fff';g.fillText(a,W/2-250,y+28);g.fillStyle=wB?'#FFDD00':'#fff';g.fillText(b,W/2+250,y+28);y+=108}
+  g.fillStyle='rgba(255,255,255,.6)';g.font=F(500,20);g.fillText('Dados oficiais da Senado Federal · nota de 0 a 10 pela regra do Radar Nas Ruas',W/2,H-92);
+  g.fillStyle='#FFDD00';g.font=F(900,30);g.fillText('nasruas.com.br/radar',W/2,H-46);
+  c.toBlob(bl=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='radar-nasruas-'+da.id+'-x-'+db.id+'.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)},'image/jpeg',0.92)}
 document.getElementById('cform').addEventListener('submit',e=>{e.preventDefault();const a=findDep(document.getElementById('ca').value),b=findDep(document.getElementById('cb').value);if(a&&b&&a!==b)history.replaceState(null,'','#c-'+a.id+'-'+b.id);comparar(a,b)});
 
 const lab={S:'Sim',N:'Não',O:'Obstrução',A:'Abstenção',P:'Presidia',['-']:'Não votou'};const pesM=new Map(PES.map(r=>[r[0],r]));
