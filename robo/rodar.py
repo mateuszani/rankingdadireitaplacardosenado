@@ -856,6 +856,13 @@ def main():
                 raise RuntimeError(f"marcador {k} não está no modelo")
             t = t.replace(k, v)
         open(os.path.join(saida, "index.html"), "w", encoding="utf-8").write(t)
+        # lista resumida para a entrada unificada do Radar Nas Ruas (www.nasruas.com.br/radar/)
+        ntm = {r[0]: r for r in NOTA}
+        lista = {"casa": "senado", "data": atual["data"], "custo_total": sc.get("custo_total"),
+                 "emendas_pago": sc.get("emendas_pago"), "CAM": CAM,
+                 "itens": [[r[0], r[1], r[2], r[3]] + ([ntm[r[0]][1], ntm[r[0]][6], ntm[r[0]][9]] if r[0] in ntm else [None, None, None])
+                           for r in DEPS]}
+        json.dump(lista, open(os.path.join(saida, "lista.json"), "w"), ensure_ascii=False, separators=(",", ":"))
         json.dump(atual, open(os.path.join(saida, "manifest.json"), "w"), ensure_ascii=False, indent=1)
         open(os.path.join(saida, ".nojekyll"), "w").close()
         rel["ok"] = True
