@@ -1,0 +1,7 @@
+{
+ "_leia": "Posição do Movimento Nas Ruas em cada votação, definida pela coordenação na planilha 'Nota Nas Ruas — posição do movimento nas votações'. Enquanto 'ativa' for false, o site continua com a nota antiga (4 critérios). posicao: S ou N. peso: 1 a 3.",
+ "ativa": false,
+ "minimo_votacoes": 10,
+ "pesos": {"alinhamento": 0.60, "custo": 0.20, "merito": 0.15, "presenca": 0.05},
+ "votacoes": {}
+}
