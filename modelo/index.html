@@ -833,13 +833,12 @@ function route(){const m=location.hash.match(/^#d-(\d+)$/);const d=m&&L.find(x=>
   if(mc){const a=L.find(x=>x.id==mc[1]),b=L.find(x=>x.id==mc[2]);dep.hidden=true;home.hidden=false;if(a)document.getElementById('ca').value=lbl(a);if(b)document.getElementById('cb').value=lbl(b);comparar(a,b);document.getElementById('comparar').scrollIntoView();return}
   if(d){dep.innerHTML=depPage(d);wireGroups(d);wireEm(d);home.hidden=true;dep.hidden=false;window.scrollTo(0,0);document.title=d.n+' · Radar NasRuas Senado'}
   else{dep.hidden=true;home.hidden=false;document.title='Radar NasRuas Senado';if(location.hash&&!location.hash.startsWith('#d-')){const t=document.querySelector(location.hash);if(t)t.scrollIntoView()}}}
-window.addEventListener('hashchange',route);route();
-}
-
 // ===== custômetro: equivalências (valores oficiais de 2026)
 try{if(CAM&&CAM.pago){const v=CAM.pago,SM=1621,MER=0.57,PNAE=6.7e9;const mi=x=>x>=1e6?(x/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' milhões':Math.round(x).toLocaleString('pt-BR');
  document.getElementById('equiv').innerHTML=`<div><b>${mi(v/SM)}</b><span>salários mínimos de R$ 1.621</span></div><div><b>${mi(v/(MER*200))}</b><span>alunos com merenda federal o ano letivo inteiro</span></div><div><b>${n1(100*v/PNAE)}%</b><span>de toda a verba federal da merenda escolar de 2026</span></div>`;
  document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pela Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026).'}}catch(e){}
+window.addEventListener('hashchange',route);route();
+}
 </script>
 </body>
 </html>
