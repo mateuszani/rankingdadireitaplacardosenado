@@ -387,7 +387,7 @@ footer b{color:var(--gold)}
 <select id="fu" aria-label="Estado"><option value="">Todos os estados</option></select>
 <select id="fp" aria-label="Partido"><option value="">Todos os partidos</option></select>
 </div>
-<div class="chips" id="ord" role="group" aria-label="Ordem da lista"><button class="chip" data-o="nome" aria-pressed="true">A a Z</button><button class="chip" data-o="nota" aria-pressed="false">Maior nota</button><button class="chip" data-o="custo" aria-pressed="false">Mais caros</button><button class="chip" data-o="barato" aria-pressed="false">Mais baratos</button><button class="chip" data-o="emendas" aria-pressed="false">Mais emendas pagas</button></div>
+<div class="chips" id="ord" role="group" aria-label="Ordem da lista"><button class="chip" data-o="nome" aria-pressed="true">A a Z</button><button class="chip" data-o="nota" aria-pressed="false">Maior nota</button><button class="chip" data-o="custo" aria-pressed="false">Mais caros</button><button class="chip" data-o="barato" aria-pressed="false">Mais baratos</button><button class="chip" data-o="emendas" aria-pressed="false">Mais emendas pagas</button></div><p class="sm" id="nleg" style="margin:6px 0 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center">Nota de 0 a 10: <span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#2f6fdc"></i> 8 a 10</span><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#9fd3ff"></i> 6 a 7,9</span><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#FFDD00"></i> 4 a 5,9</span><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#ff9a3c"></i> 2 a 3,9</span><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#d93636"></i> 0 a 1,9</span></p>
 <p class="cnt" id="cnt"></p>
 <ul class="list" id="dl"></ul>
 <button class="btn" id="more">Mostrar mais senadores</button>
@@ -590,7 +590,7 @@ let lim=30;
 let ORD='nome';
 function row(d){const nt=d.nt&&d.nt[1];const cu=d.cu?d.cu[1]:0;
   const extra=ORD==='emendas'?`${brlc(d.em?d.em[3]:0)} em emendas pagas`:`custou ${brlc(cu)}`;
-  return `<li class="item"><div class="av" aria-hidden="true">${ini(d.n)}</div><div><a class="nm" href="#d-${d.id}">${esc(d.n)}</a><span class="sm">${N(d.p)}-${d.uf}, ${extra}</span></div><div class="pr"><span class="notab" title="Nota de 0 a 10">${n1(nt)}</span><br>nota</div></li>`}
+  return `<li class="item"><div class="av" aria-hidden="true">${ini(d.n)}</div><div><a class="nm" href="#d-${d.id}">${esc(d.n)}</a><span class="sm">${N(d.p)}-${d.uf}, ${extra}</span></div><div class="pr"><span class="notab" title="Nota de 0 a 10" style="${nt==null?'':(([[8,'#2f6fdc','#fff'],[6,'#9fd3ff','#071C12'],[4,'#FFDD00','#071C12'],[2,'#ff9a3c','#071C12'],[0,'#d93636','#fff']].find(x=>nt>=x[0]))||[0,'','']).slice(1).map((c,i)=>(i?'color:':'background:')+c).join(';')}">${n1(nt)}</span><br>nota</div></li>`}
 function list(){const s=norm(q.value.trim());
   const a=L.filter(d=>(!fu.value||d.uf===fu.value)&&(!fp.value||d.p===fp.value)&&(!s||norm(d.n).includes(s))).sort(ORD==='nota'?(x,y)=>((y.nt&&y.nt[1])??-1)-((x.nt&&x.nt[1])??-1):ORD==='custo'?(x,y)=>(y.cu?y.cu[1]:0)-(x.cu?x.cu[1]:0):ORD==='barato'?(x,y)=>((x.nt&&x.nt[9])??1e12)-((y.nt&&y.nt[9])??1e12):ORD==='emendas'?(x,y)=>(y.em?y.em[3]:0)-(x.em?x.em[3]:0):(x,y)=>x.n.localeCompare(y.n,'pt'));
   document.getElementById('cnt').textContent=a.length===1?'1 senador':a.length+' senadores';
