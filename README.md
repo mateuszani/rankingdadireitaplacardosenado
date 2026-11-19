@@ -2,7 +2,7 @@
 
 O que cada um dos 81 senadores faz, só com dados oficiais: presença nas votações, propostas separadas em grupos
 fáceis de entender, votos, com quem cada um vota junto, quanto custou o mandato, as emendas já pagas por setor,
-uma nota de 0 a 10 com regra pública, o comparativo entre dois senadores e o Custódromo com o gasto do Senado no ano.
+uma nota de 0 a 10 com regra pública, o comparativo entre dois senadores e o Custômetro com o gasto do Senado no ano.
 Um projeto do movimento **NasRuas**, irmão do [Radar NasRuas Câmara Federal](https://mateuszani.github.io/rankingdadireitaplacardacamara/).
 
 **Site:** https://mateuszani.github.io/rankingdadireitaplacardosenado/
@@ -15,7 +15,7 @@ Todo dia às 03:47 (horário de Brasília) o GitHub roda `robo/rodar.py`, que:
    - Dados Abertos Legislativos do Senado: senadores em exercício, períodos de exercício, votações nominais
      (com o voto ou a ausência de cada senador), orientação das lideranças e proposições de cada senador;
    - Dados Abertos Administrativos do Senado: cota parlamentar (CEAPS) e recursos usados por senador;
-   - Transparência do Senado: execução orçamentária do ano (Custódromo);
+   - Transparência do Senado: execução orçamentária do ano (Custômetro);
    - Portal da Transparência (CGU): arquivo de emendas parlamentares (empenhado, liquidado e pago);
 2. calcula tudo o que o site mostra;
 3. **confere** antes de publicar. O site **não** é publicado se:
