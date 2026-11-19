@@ -1,7 +1,41 @@
 {
  "_leia": "Posição do Movimento Nas Ruas em cada votação, definida pela coordenação na planilha 'Nota Nas Ruas — posição do movimento nas votações'. Enquanto 'ativa' for false, o site continua com a nota antiga (4 critérios). posicao: S ou N. peso: 1 a 3.",
- "ativa": false,
- "minimo_votacoes": 10,
- "pesos": {"alinhamento": 0.60, "custo": 0.20, "merito": 0.15, "presenca": 0.05},
- "votacoes": {}
+ "ativa": true,
+ "minimo_votacoes": 3,
+ "pesos": {
+  "alinhamento": 0.6,
+  "custo": 0.2,
+  "merito": 0.15,
+  "presenca": 0.05
+ },
+ "votacoes": {
+  "7095-4408": {
+   "posicao": "S",
+   "peso": 1
+  },
+  "7041-4356": {
+   "posicao": "N",
+   "peso": 2
+  },
+  "7032-4348": {
+   "posicao": "S",
+   "peso": 3
+  },
+  "7033-4349": {
+   "posicao": "N",
+   "peso": 1
+  },
+  "7016-4332": {
+   "posicao": "S",
+   "peso": 2
+  },
+  "7007-4323": {
+   "posicao": "N",
+   "peso": 3
+  },
+  "6921-4238": {
+   "posicao": "S",
+   "peso": 1
+  }
+ }
 }
