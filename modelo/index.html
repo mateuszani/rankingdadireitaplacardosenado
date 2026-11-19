@@ -774,7 +774,7 @@ async function cmpJPG(da,db,wa,wb){try{await document.fonts.ready}catch(e){}
     g.fillStyle='rgba(255,255,255,.7)';g.font=F(700,22);g.fillText(t.toUpperCase(),W/2,y-14);
     const wA=va!=null&&vb!=null&&va!==vb&&(mm?va>vb:va<vb),wB=va!=null&&vb!=null&&va!==vb&&!wA;
     g.font=F(900,34);g.fillStyle=wA?'#FFDD00':'#fff';g.fillText(a,W/2-250,y+28);g.fillStyle=wB?'#FFDD00':'#fff';g.fillText(b,W/2+250,y+28);y+=108}
-  g.fillStyle='rgba(255,255,255,.6)';g.font=F(500,20);g.fillText('Dados oficiais da Senado Federal · nota de 0 a 10 pela regra do Radar Nas Ruas',W/2,H-92);
+  g.fillStyle='rgba(255,255,255,.6)';g.font=F(500,20);g.fillText('Dados oficiais do Senado Federal · nota de 0 a 10 pela regra do Radar Nas Ruas',W/2,H-92);
   g.fillStyle='#FFDD00';g.font=F(900,30);g.fillText('nasruas.com.br/radar',W/2,H-46);
   c.toBlob(bl=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='radar-nasruas-'+da.id+'-x-'+db.id+'.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)},'image/jpeg',0.92)}
 document.getElementById('cform').addEventListener('submit',e=>{e.preventDefault();const a=findDep(document.getElementById('ca').value),b=findDep(document.getElementById('cb').value);if(a&&b&&a!==b)history.replaceState(null,'','#c-'+a.id+'-'+b.id);comparar(a,b)});
@@ -836,7 +836,7 @@ function route(){const m=location.hash.match(/^#d-(\d+)$/);const d=m&&L.find(x=>
 // ===== custômetro: equivalências (valores oficiais de 2026)
 try{if(CAM&&CAM.pago){const v=CAM.pago,SM=1621,MER=0.57,PNAE=6.7e9;const mi=x=>x>=1e6?(x/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' milhões':Math.round(x).toLocaleString('pt-BR');
  document.getElementById('equiv').innerHTML=`<div><b>${mi(v/SM)}</b><span>salários mínimos de R$ 1.621</span></div><div><b>${mi(v/(MER*200))}</b><span>alunos com merenda federal o ano letivo inteiro</span></div><div><b>${n1(100*v/PNAE)}%</b><span>de toda a verba federal da merenda escolar de 2026</span></div>`;
- document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pela Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026).'}}catch(e){}
+ document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pelo Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026).'}}catch(e){}
 window.addEventListener('hashchange',route);route();
 }
 </script>
