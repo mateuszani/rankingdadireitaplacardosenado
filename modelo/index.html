@@ -777,10 +777,10 @@ function comparar(da,db){const box=document.getElementById('cres');
   const ver=W?`<b>${esc(W.n)} tem a melhor performance</b> pela regra do site: nota ${n1(W.nt[1])} contra ${n1(Lz.nt[1])}.${gW.length?' Vai melhor em '+lista(gW)+'.':''}${gL.length?' '+esc(Lz.n)+' vai melhor em '+lista(gL)+'.':''}`:`<b>Empate</b> na nota (${n1(na)}).`;
   box.innerHTML=`<div class="vs2">${side(da,wa)}${side(db,wb)}</div><div class="verdict">${ver} <a href="#nota">Como a nota é calculada</a></div>${rows}
   ${info('Custo do mandato até hoje',brlc(da.cu[1]),brlc(db.cu[1]))}${info('Emendas pagas',brlc(da.em[3]),brlc(db.em[3]))}${info('Propostas apresentadas (2023 a 2026)',fmt(da.rs.slice(1,6).reduce((x,y)=>x+y,0)),fmt(db.rs.slice(1,6).reduce((x,y)=>x+y,0)))}${info('Votou com o próprio partido',da.fi==null?'–':f1(da.fi),db.fi==null?'–':f1(db.fi))}
-  <p style="margin-top:14px"><button type="button" class="btn" id="cjpg" style="background:#FFDD00;color:#071C12;border:0;border-radius:999px;padding:12px 22px;font-weight:800;cursor:pointer">Baixar imagem da comparação (JPEG)</button></p>
+  <p style="margin-top:14px"><span class="sm" style="display:block;margin-bottom:6px">Baixar a comparação em imagem (JPEG):</span><button type="button" id="cjpg" style="background:#FFDD00;color:#071C12;border:0;border-radius:999px;padding:12px 20px;font-weight:800;cursor:pointer;margin:0 8px 8px 0">Post vertical 4:5</button><button type="button" id="cjpgq" style="background:#FFDD00;color:#071C12;border:0;border-radius:999px;padding:12px 20px;font-weight:800;cursor:pointer;margin:0 8px 8px 0">Feed quadrado</button><button type="button" id="cjpgs" style="background:#FFDD00;color:#071C12;border:0;border-radius:999px;padding:12px 20px;font-weight:800;cursor:pointer;margin:0 8px 8px 0">Stories</button></p>
   <p class="sm" style="margin-top:12px">Link desta comparação: <a href="#c-${da.id}-${db.id}">copie o endereço da página</a>.</p>`;
-  document.getElementById('cjpg').onclick=()=>cmpJPG(da,db,wa,wb)}
-async function cmpJPG(da,db,wa,wb){try{await document.fonts.ready}catch(e){}
+  document.getElementById('cjpg').onclick=()=>cmpJPG(da,db,wa,wb,'v');document.getElementById('cjpgq').onclick=()=>cmpJPG(da,db,wa,wb,'q');document.getElementById('cjpgs').onclick=()=>cmpJPG(da,db,wa,wb,'s')}
+async function cmpJPG(da,db,wa,wb,fmt){try{await document.fonts.ready}catch(e){}
   const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
   const F=(w,px)=>`${w} ${px}px Montserrat, Poppins, Arial, sans-serif`;
   const grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#123A27');grd.addColorStop(1,'#071C12');g.fillStyle=grd;g.fillRect(0,0,W,H);
@@ -802,7 +802,9 @@ async function cmpJPG(da,db,wa,wb){try{await document.fonts.ready}catch(e){}
     g.font=F(900,34);g.fillStyle=wA?'#FFDD00':'#fff';g.fillText(a,W/2-250,y+28);g.fillStyle=wB?'#FFDD00':'#fff';g.fillText(b,W/2+250,y+28);y+=108}
   g.fillStyle='rgba(255,255,255,.6)';g.font=F(500,20);g.fillText('Dados oficiais do Senado Federal · nota de 0 a 10 pela regra do Radar Nas Ruas',W/2,H-92);
   g.fillStyle='#FFDD00';g.font=F(900,30);g.fillText('nasruas.com.br/radar',W/2,H-46);
-  c.toBlob(bl=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='radar-nasruas-'+da.id+'-x-'+db.id+'.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)},'image/jpeg',0.92)}
+  let o=c;if(fmt==='q'||fmt==='s'){const TH=fmt==='q'?1080:1920;o=document.createElement('canvas');o.width=1080;o.height=TH;const q=o.getContext('2d');const gg=q.createLinearGradient(0,0,0,TH);gg.addColorStop(0,'#123A27');gg.addColorStop(1,'#071C12');q.fillStyle=gg;q.fillRect(0,0,1080,TH);
+   if(fmt==='q'){const k=1080/1350,w=1080*k;q.drawImage(c,(1080-w)/2,0,w,1080)}else{q.drawImage(c,0,(TH-1350)/2,1080,1350);q.textAlign='center';q.fillStyle='#FFDD00';q.font=F(900,44);q.fillText('NÓS NÃO DESISTIMOS DO BRASIL',540,200);q.fillStyle='#fff';q.font=F(700,34);q.fillText('Confira a nota de quem te representa',540,1760)}}
+  o.toBlob(bl=>{const u=URL.createObjectURL(bl),a=document.createElement('a');a.href=u;a.download='radar-nasruas-'+da.id+'-x-'+db.id+'-'+(fmt||'v')+'.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)},'image/jpeg',0.92)}
 document.getElementById('cform').addEventListener('submit',e=>{e.preventDefault();const a=findDep(document.getElementById('ca').value),b=findDep(document.getElementById('cb').value);if(a&&b&&a!==b)history.replaceState(null,'','#c-'+a.id+'-'+b.id);comparar(a,b)});
 
 const lab={S:'Sim',N:'Não',O:'Obstrução',A:'Abstenção',P:'Presidia',['-']:'Não votou'};const pesM=new Map(PES.map(r=>[r[0],r]));
@@ -861,8 +863,8 @@ function route(){const m=location.hash.match(/^#d-(\d+)$/);const d=m&&L.find(x=>
   else{dep.hidden=true;home.hidden=false;document.title='Radar NasRuas Senado';if(location.hash&&!location.hash.startsWith('#d-')){const t=document.querySelector(location.hash);if(t)t.scrollIntoView()}}}
 // ===== custômetro: equivalências (valores oficiais de 2026)
 try{if(CAM&&CAM.pago){const v=CAM.pago,SM=1621,MER=0.57,PNAE=6.7e9;const mi=x=>x>=1e6?(x/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' milhões':Math.round(x).toLocaleString('pt-BR');
- document.getElementById('equiv').innerHTML=`<div><b>${mi(v/SM)}</b><span>salários mínimos de R$ 1.621</span></div><div><b>${mi(v/(MER*200))}</b><span>alunos com merenda federal o ano letivo inteiro</span></div><div><b>${n1(100*v/PNAE)}%</b><span>de toda a verba federal da merenda escolar de 2026</span></div>`;
- document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pelo Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026).'}}catch(e){}
+ document.getElementById('equiv').innerHTML=`<div><b>${mi(v/SM)}</b><span>salários mínimos de R$ 1.621</span></div><div><b>${mi(v/(MER*200))}</b><span>alunos com merenda federal o ano letivo inteiro</span></div><div><b>${n1(100*v/PNAE)}%</b><span>de toda a verba federal da merenda escolar de 2026</span></div><div><b>${mi(v/292600)}</b><span>ambulâncias novas do Samu 192 (R$ 292,6 mil cada)</span></div>`;
+ document.getElementById('equivnota').innerHTML='Conta feita com o valor oficial pago pelo Senado em '+CAM.ano+'. Referências: salário mínimo de R$ 1.621 (Decreto 12.797/2025); merenda federal de R$ 0,57 por aluno do ensino fundamental e médio por dia, em 200 dias letivos, e R$ 6,7 bilhões do PNAE em 2026 (Resolução CD/FNDE nº 1/2026); ambulância padrão Samu 192, furgão sem equipamentos, R$ 292.600 por unidade (Ministério da Saúde, Contrato nº 330/2025).'}}catch(e){}
 // ===== ficha: gasto mês a mês e últimas votações (arquivos g/ e u/)
 async function wireExtra(d){const k=d.id%64;
  const get=async(dir)=>{try{const r=await fetch(dir+'/'+k+'.json');if(!r.ok)return null;const j=await r.json();return j[d.id]||null}catch(e){return null}};
