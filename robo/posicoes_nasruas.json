@@ -1,7 +1,7 @@
 {
  "_leia": "Posição do Movimento Nas Ruas em cada votação, definida pela coordenação na planilha 'Nota Nas Ruas — posição do movimento nas votações'. Enquanto 'ativa' for false, o site continua com a nota antiga (4 critérios). posicao: S ou N. peso: 1 a 3.",
  "ativa": true,
- "minimo_votacoes": 5,
+ "minimo_votacoes": 1,
  "pesos": {
   "alinhamento": 0.6,
   "custo": 0.2,
@@ -38,5 +38,6 @@
    "peso": 1
   }
  },
- "definido_em": "2026-11-19"
+ "definido_em": "2026-11-19",
+ "_regra": "Conta todas as votações marcadas do período em que o parlamentar estava no mandato. Faltar, se abster ou obstruir conta como não alinhado: ele está lá para votar."
 }
