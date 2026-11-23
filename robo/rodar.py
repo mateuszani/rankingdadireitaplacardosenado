@@ -842,7 +842,9 @@ def conferir(atual, anterior, sens, sv, sp, sc, faltas, CAM, EMd):
         a0 = anterior.get("contagens", {})
         for k, v in atual["contagens"].items():
             v0 = a0.get(k)
-            if isinstance(v0, (int, float)) and isinstance(v, (int, float)) and v0 > 0 and v < v0 * 0.99:
+            # somas dos senadores em exercício podem cair um pouco quando um suplente assume no lugar do titular
+            tol = 0.95 if k in ("custo_mandatos", "emendas_pagas") else 0.99
+            if isinstance(v0, (int, float)) and isinstance(v, (int, float)) and v0 > 0 and v < v0 * tol:
                 if k == "gasto_senado" and atual["data"][3:] != anterior.get("data", "")[3:] and atual["data"][3:5] == "01":
                     continue
                 prob.append(f"{k} caiu de {v0:,} para {v:,} desde a última versão publicada")
