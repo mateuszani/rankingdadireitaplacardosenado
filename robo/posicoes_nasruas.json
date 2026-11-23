@@ -4,9 +4,10 @@
  "minimo_votacoes": 1,
  "pesos": {
   "alinhamento": 0.6,
-  "custo": 0.2,
-  "merito": 0.15,
-  "presenca": 0.05
+  "custo": 0.15,
+  "merito": 0.1,
+  "presenca": 0.05,
+  "emendas": 0.1
  },
  "votacoes": {
   "7095-4408": {

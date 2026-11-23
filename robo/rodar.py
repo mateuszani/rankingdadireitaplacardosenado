@@ -188,6 +188,32 @@ def pos_of(s, n, o=0):
     return None
 
 
+def qualidade_emendas(itens):
+    """Qualidade das emendas (0 a 10): parte do valor pago que foi para áreas prioritárias do país
+    (saúde, segurança pública, educação e infraestrutura) com destino identificado. Emenda Pix
+    (transferência especial, sem plano de trabalho) não conta como prioritária. Sem valor pago: sem nota."""
+    import unicodedata
+    def nz(t):
+        return unicodedata.normalize("NFD", str(t or "")).encode("ascii", "ignore").decode().lower()
+    PRIO = ("saude", "hospital", "ambulat", "atencao primaria", "atencao basica", "seguranca publica", "policia", "policial",
+            "bombeiro", "educacao", "escola", "creche", "ensino", "saneamento", "abastecimento de agua", "esgoto",
+            "rodovia", "estrada", "pavimentacao", "transporte", "infraestrutura", "urbaniza", "ponte")
+    tot = pix = prio = 0.0
+    for it in itens:
+        org, desc, pg = it[1], it[2], float(it[5] or 0)
+        if pg <= 0:
+            continue
+        t = nz(org) + " " + nz(desc)
+        tot += pg
+        if "transferencias especiais" in t or "transferencia especial" in t:
+            pix += pg
+        elif any(k in t for k in PRIO):
+            prio += pg
+    if tot <= 0:
+        return None
+    return [round(10 * prio / tot, 1), round(100 * prio / tot, 1), round(100 * pix / tot, 1), round(tot, 2)]
+
+
 def carregar_posicoes():
     try:
         c = json.load(open(os.path.join(RAIZ, "robo", "posicoes_nasruas.json"), encoding="utf-8"))
@@ -198,7 +224,7 @@ def carregar_posicoes():
     return c
 
 
-def nota_nasruas(NOTA, ALIN, cfg):
+def nota_nasruas(NOTA, ALIN, cfg, EQ=None):
     """Nota Nas Ruas: alinhamento (0-10 pela % de votos iguais à posição do movimento) + custo, mérito e presença
     (as mesmas notas de 0 a 10 por posição entre os colegas). Devolve {id: [nota, alinhamento%, n_votacoes]}."""
     p = cfg["pesos"]; out = {}
@@ -209,8 +235,9 @@ def nota_nasruas(NOTA, ALIN, cfg):
             out[i] = [None, a[0] if a else None, a[1] if a else 0]
             continue
         pres = [x for x in (sp, sv_) if x is not None]
-        partes = [(p["alinhamento"], a[0] / 10), (p["custo"], sc_), (p["merito"], sl), (p["presenca"], sum(pres) / len(pres) if pres else None)]
-        partes = [(w, x) for w, x in partes if x is not None]
+        partes = [(p["alinhamento"], a[0] / 10), (p["custo"], sc_), (p["merito"], sl), (p["presenca"], sum(pres) / len(pres) if pres else None),
+                  (p.get("emendas", 0), (EQ or {}).get(i, [None])[0])]
+        partes = [(w, x) for w, x in partes if x is not None and w]
         out[i] = [round(sum(w * x for w, x in partes) / sum(w for w, _ in partes), 1), a[0], a[1]]
     return out
 
@@ -720,6 +747,7 @@ def calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, said
     SETS = []
     si = {}
     EMD, shards = [], collections.defaultdict(dict)
+    EQ = {}
     sem_match = []
     ambiguos = []
     if EMd is not None:
@@ -752,6 +780,9 @@ def calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, said
                               round(r.liq, 2), round(r.emp, 2), round(r.pg, 2), si[s]])
             itens.sort(key=lambda z: (-z[0], -z[5]))
             shards[d["id"] % 64][d["id"]] = itens
+            q_ = qualidade_emendas(itens)
+            if q_:
+                EQ[d["id"]] = q_
             EMD.append([d["id"], round(float(x.liq.sum()), 2), round(float(x.emp.sum()), 2),
                         round(float(x.pg.sum()), 2), len(itens), por, 1 if x.empty else 0])
         for r in EMD:
@@ -804,7 +835,7 @@ def calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, said
         NOTA.append([i, round(sum(ok) / len(ok), 1) if ok else None] + sc + raw)
     stats = {"custo_total": round(sum(r[1] for r in CU), 2), "emendas_pago": round(sum(r[3] for r in EMD), 2),
              "com_custo": sum(1 for r in CU if r[1] > 0), "difs_ceaps": difs, "sem_emendas": sem_match, "ambiguos": ambiguos,
-             "com_emendas": sum(1 for r in EMD if r[4] > 0)}
+             "com_emendas": sum(1 for r in EMD if r[4] > 0), "eq": EQ}
     return CU, EMD, NOTA, SETS, SETT, PES, stats
 
 
@@ -900,13 +931,13 @@ def main():
         CU, EMD, NOTA, SETS, SETT, PES, sc = calcular_custos_emendas(sens, MAND, CE, RU, EMd, OFFv, DEPS, RES, hoje, saida)
         NRC = carregar_posicoes(); NR = None
         if sv["alin"]:
-            NRn = nota_nasruas(NOTA, sv["alin"], NRC)
+            NRn = nota_nasruas(NOTA, sv["alin"], NRC, sc.get("eq"))
             com = [v for v in NRn.values() if v[0] is not None]
             log(f"  nota Nas Ruas: {len(NRC['votacoes'])} votações marcadas, {len(com)} senadores com nota nova"
                 + (f", média {sum(v[0] for v in com) / len(com):.1f}" if com else "") + ("" if NRC["ativa"] else " (ainda não ativa no site)"))
             if NRC["ativa"] and com:
                 NR = {"pesos": NRC["pesos"], "n": len([k for k, v in NRC["votacoes"].items() if v.get("posicao") in ("S", "N")]), "v": sv["nrv"],
-                      "minimo": NRC["minimo_votacoes"], "a": {i: v[1:] for i, v in NRn.items()}}
+                      "minimo": NRC["minimo_votacoes"], "a": {i: v[1:] for i, v in NRn.items()}, "e": sc.get("eq") or {}}
                 for r in NOTA:
                     r[1] = NRn[r[0]][0]
                 os.makedirs(os.path.join(saida, "n"), exist_ok=True)
